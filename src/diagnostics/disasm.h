@@ -19,7 +19,7 @@ class V8_EXPORT_PRIVATE NameConverter {
   virtual ~NameConverter() = default;
   virtual const char* NameOfCPURegister(int reg) const;
   virtual const char* NameOfByteCPURegister(int reg) const;
-  virtual const char* NameOfXMMRegister(int reg) const;
+  virtual const char* NameOfXMMRegister(int reg, bool is_128 = true) const;
   virtual const char* NameOfAddress(byte* addr) const;
   virtual const char* NameOfConstant(byte* addr) const;
   virtual const char* NameInCode(byte* addr) const;
