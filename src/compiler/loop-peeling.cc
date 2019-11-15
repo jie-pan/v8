@@ -189,8 +189,14 @@ bool LoopPeeler::CanPeel(LoopTree::Loop* loop) {
           case IrOpcode::kLoopExitEffect:
             unmarked_exit = (node->InputAt(1)->InputAt(1) != loop_node);
             break;
+          //panjie wasm
+          case IrOpcode::kBranch:
+            unmarked_exit = (use->opcode() != IrOpcode::kIfTrue &&
+                             use->opcode() != IrOpcode::kIfFalse);
+            break;
           default:
-            unmarked_exit = (use->opcode() != IrOpcode::kTerminate);
+            unmarked_exit = (use->opcode() != IrOpcode::kTerminate) &&
+                            (use->opcode() != IrOpcode::kReturn);
         }
         if (unmarked_exit) {
           if (FLAG_trace_turbo_loop) {
@@ -236,6 +242,7 @@ PeeledIteration* LoopPeeler::Peel(LoopTree::Loop* loop) {
   //============================================================================
   Node* loop_node = loop_tree_->GetLoopControl(loop);
   Node* new_entry;
+  Node* old_entry = loop_node->InputAt(0);//panjie
   int backedges = loop_node->InputCount() - 1;
   if (backedges > 1) {
     // Multiple backedges from original loop, therefore multiple output edges
@@ -300,8 +307,50 @@ PeeledIteration* LoopPeeler::Peel(LoopTree::Loop* loop) {
         break;
     }
   }
+
+  //panjie
+  //EliminateBranch(loop_node, old_entry);
   return iter;
 }
+//
+void LoopPeeler::EliminateBranch(Node* loop, Node* old_entry) {
+
+    PrintF("panjie--- Eliminate branch in peel loop %i:\n", loop->id());
+
+    NodeVector tmp(tmp_zone_);
+    Node* input = loop->InputAt(0);
+    if (input->opcode() == IrOpcode::kIfFalse ||
+        input->opcode() == IrOpcode::kIfTrue)
+    {
+
+        tmp.push_back(input);
+        Node* branch = input->InputAt(0);
+        tmp.push_back(branch);
+        Node* cond = branch->InputAt(0);
+        tmp.push_back(cond);
+        // Normalize to less than comparison.
+        switch (cond->opcode()) {
+        case IrOpcode::kWord32Equal:
+            if (cond->InputAt(0)->opcode() == IrOpcode::kWord32Equal)
+            {
+                cond = cond->InputAt(0);
+                tmp.push_back(cond);
+            }
+            break;
+        case IrOpcode::kJSLessThan:
+            break;
+        default:
+            break;
+        }
+
+        loop->ReplaceInput(0, old_entry);
+        for (Node* node: tmp)
+        {
+            node->Kill();
+        }
+   }
+}
+
 
 void LoopPeeler::PeelInnerLoops(LoopTree::Loop* loop) {
   // If the loop has nested loops, peel inside those.
@@ -325,7 +374,7 @@ void LoopPeeler::PeelInnerLoops(LoopTree::Loop* loop) {
 }
 
 namespace {
-
+//kill 3 nodes(kLoopExitValue, kLoopExitEffect and kLoopExit)
 void EliminateLoopExit(Node* node) {
   DCHECK_EQ(IrOpcode::kLoopExit, node->opcode());
   // The exit markers take the loop exit as input. We iterate over uses
@@ -367,7 +416,7 @@ void LoopPeeler::EliminateLoopExits(Graph* graph, Zone* tmp_zone) {
     Node* node = queue.front();
     queue.pop();
 
-    if (node->opcode() == IrOpcode::kLoopExit) {
+    if (node->opcode() == IrOpcode::kLoopExit) {//only process kLoopExit node
       Node* control = NodeProperties::GetControlInput(node);
       EliminateLoopExit(node);
       if (!visited[control->id()]) {
