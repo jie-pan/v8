@@ -6898,6 +6898,12 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
         .LowerGraph();
   }
 
+  if (builder.has_simd())
+  {
+    mcgraph->graph()->SetSimd(true);
+    PrintF("wasm function #%d has simd\n", func_index);
+  }
+
   if (func_index >= FLAG_trace_wasm_ast_start &&
       func_index < FLAG_trace_wasm_ast_end) {
     PrintRawWasmCode(allocator, func_body, env->module, wasm::kPrintLocals);

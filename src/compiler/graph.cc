@@ -22,7 +22,8 @@ Graph::Graph(Zone* zone)
       end_(nullptr),
       mark_max_(0),
       next_node_id_(0),
-      decorators_(zone) {}
+      decorators_(zone),
+      has_simd_(false) {}
 
 
 void Graph::Decorate(Node* node) {
