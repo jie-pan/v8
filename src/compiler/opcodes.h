@@ -1006,6 +1006,10 @@ class V8_EXPORT_PRIVATE IrOpcode {
   static bool IsContextChainExtendingOpcode(Value value) {
     return kJSCreateFunctionContext <= value && value <= kJSCreateBlockContext;
   }
+
+  static bool IsSimdOpcode(Value value) {
+    return kF32x4Splat <= value && value <= kS1x16AllTrue;
+  }
 };
 
 V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream&, IrOpcode::Value);
