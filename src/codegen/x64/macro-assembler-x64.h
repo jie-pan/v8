@@ -207,6 +207,16 @@ class V8_EXPORT_PRIVATE TurboAssembler : public TurboAssemblerBase {
 
 #undef AVX_OP
 
+#define AVX256_OP(macro_name)                              \
+  template <typename Dst, typename... Args>                \
+  void macro_name(Dst dst, Args... args) {                 \
+        Assembler::v##macro_name(dst, dst, args...);             \
+  }
+
+
+  //AVX256_OP(addps256)
+#undef AVX256_OP
+
   void PushReturnAddressFrom(Register src) { pushq(src); }
   void PopReturnAddressTo(Register dst) { popq(dst); }
 
