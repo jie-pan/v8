@@ -155,7 +155,8 @@ static std::string GetFunctionNameFromMixedName(const char* str, int length) {
     count++;
   }
 
-  return std::string(start_ptr, count);
+  //return std::string(start_ptr, count);
+  return std::string(str, length);
 }
 
 // The JitCodeEventHandler for Vtune.
