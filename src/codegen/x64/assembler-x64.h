@@ -1214,6 +1214,8 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vmovsd(Operand dst, XMMRegister src) { vsd(0x11, src, xmm0, dst); }
   void vmovdqu(XMMRegister dst, Operand src);
   void vmovdqu(Operand dst, XMMRegister src);
+  void vmovdqu256(XMMRegister dst, Operand src);
+  void vmovdqu256(Operand dst, XMMRegister src);
 
 #define AVX_SSE_UNOP(instr, escape, opcode)          \
   void v##instr(XMMRegister dst, XMMRegister src2) { \
