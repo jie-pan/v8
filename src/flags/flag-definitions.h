@@ -771,6 +771,8 @@ DEFINE_BOOL(wasm_far_jump_table, true,
 DEFINE_INT(wasm_max_initial_code_space_reservation, 0,
            "maximum size of the initial wasm code space reservation (in MB)")
 
+DEFINE_BOOL(wasm_revec, false, "wasm loop re-vectorization")
+
 // Profiler flags.
 DEFINE_INT(frame_count, 1, "number of stack frames inspected by the profiler")
 
