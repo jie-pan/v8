@@ -30,7 +30,8 @@ BasicBlock::BasicBlock(Zone* zone, Id id)
 #if DEBUG
       debug_info_(AssemblerDebugInfo(nullptr, nullptr, -1)),
 #endif
-      id_(id) {
+      id_(id),
+      need_convert_(false) {
 }
 
 bool BasicBlock::LoopContains(BasicBlock* block) const {

@@ -250,7 +250,7 @@ class V8_EXPORT_PRIVATE CodeGenerator final : public GapResolver::Assembler {
   // ============= Architecture-specific code generation methods. ==============
   // ===========================================================================
 
-  CodeGenResult AssembleArchInstruction(Instruction* instr);
+  CodeGenResult AssembleArchInstruction(Instruction* instr, bool need_convert = false);
   void AssembleArchJump(RpoNumber target);
   void AssembleArchBranch(Instruction* instr, BranchInfo* branch);
 
