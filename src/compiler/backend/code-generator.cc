@@ -704,7 +704,7 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleInstruction(
     instr_starts_[instruction_index].arch_instr_pc_offset = tasm()->pc_offset();
   }
   // Assemble architecture-specific code for the instruction.
-  CodeGenResult result = AssembleArchInstruction(instr);
+  CodeGenResult result = AssembleArchInstruction(instr, block->need_convert());
   if (result != kSuccess) return result;
 
   if (info()->trace_turbo_json_enabled()) {

@@ -749,7 +749,7 @@ void CodeGenerator::AssembleRegisterArgumentPoisoning() {
 
 // Assembles an instruction after register allocation, producing machine code.
 CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
-    Instruction* instr) {
+    Instruction* instr, bool need_convert) {
   X64OperandConverter i(this, instr);
   InstructionCode opcode = instr->opcode();
   ArchOpcode arch_opcode = ArchOpcodeField::decode(opcode);
