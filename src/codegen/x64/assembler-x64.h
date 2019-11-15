@@ -1364,7 +1364,7 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   // 256 bits AVX
   //AVX_P_3_256(vadd, 0x58)
   //AVX_P_3_256(vsub, 0x5c)
-  //AVX_P_3_256(vxor, 0x57)
+  AVX_P_3_256(vxor, 0x57)
 
 #define AVX_SCALAR(instr, prefix, escape, opcode)                      \
   void v##instr(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
