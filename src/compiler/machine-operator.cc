@@ -1001,6 +1001,22 @@ struct CommentOperator : public Operator1<const char*> {
                                "Comment", 0, 1, 1, 0, 1, 0, msg) {}
 };
 
+struct S8x16ShuffleOperator : public Operator1<const uint8_t*> {
+  explicit S8x16ShuffleOperator(const uint8_t* array)
+      : Operator1<const uint8_t*>(IrOpcode::kS8x16Shuffle, Operator::kPure,
+                                  "Shuffle", 2, 0, 0, 1, 0, 0, array) {}
+  void PrintParameter(std::ostream& os, PrintVerbosity verbose) const override {
+    const uint8_t* param = parameter();
+    std::string separator = "";
+    os << "[";
+    for (int i = 0; i < 16; i++) {
+      separator = (i < 15) ? "," : "";
+      os << static_cast<uint32_t>(param[i]) << separator;
+    }
+    os << "]";
+  }
+};
+
 namespace {
 DEFINE_LAZY_LEAKY_OBJECT_GETTER(MachineOperatorGlobalCache,
                                 GetMachineOperatorGlobalCache)
@@ -1483,9 +1499,7 @@ const Operator* MachineOperatorBuilder::S8x16Shuffle(
     const uint8_t shuffle[16]) {
   uint8_t* array = zone_->NewArray<uint8_t>(16);
   memcpy(array, shuffle, 16);
-  return new (zone_)
-      Operator1<uint8_t*>(IrOpcode::kS8x16Shuffle, Operator::kPure, "Shuffle",
-                          2, 0, 0, 1, 0, 0, array);
+  return new (zone_) S8x16ShuffleOperator(array);
 }
 
 const uint8_t* S8x16ShuffleOf(Operator const* op) {
