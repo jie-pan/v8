@@ -1250,7 +1250,14 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                    \
   void v##instr(XMMRegister dst, XMMRegister src1, Operand src2) {     \
     vps(0x##opcode, dst, src1, src2);                                  \
+  }                                                                    \
+  void v##instr##256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vps256(0x##opcode, dst, src1, src2);                                    \
+  }                                                                         \
+  void v##instr##256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vps256(0x##opcode, dst, src1, src2);                                    \
   }
+
   SSE_BINOP_INSTRUCTION_LIST(AVX_SSE_BINOP)
 #undef AVX_SSE_BINOP
 
