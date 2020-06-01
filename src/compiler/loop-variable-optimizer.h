@@ -41,7 +41,9 @@ class InductionVariable : public ZoneObject {
 
  private:
   friend class LoopVariableOptimizer;
+  friend class LoopRevectorizer;
 
+ protected:
   InductionVariable(Node* phi, Node* effect_phi, Node* arith, Node* increment,
                     Node* init_value, Zone* zone, ArithmeticType arithmeticType)
       : phi_(phi),
@@ -53,6 +55,7 @@ class InductionVariable : public ZoneObject {
         upper_bounds_(zone),
         arithmeticType_(arithmeticType) {}
 
+ private:
   void AddUpperBound(Node* bound, ConstraintKind kind);
   void AddLowerBound(Node* bound, ConstraintKind kind);
 
@@ -65,6 +68,27 @@ class InductionVariable : public ZoneObject {
   ZoneVector<Bound> upper_bounds_;
   ArithmeticType arithmeticType_;
 };
+
+class IteratorVariable : public InductionVariable{
+ public:
+  Node* cond() const { return cond_; }
+  Node* final_value() const { return final_value_; }
+
+ private:
+  friend class LoopVariableOptimizer;
+  friend class LoopRevectorizer;
+
+  IteratorVariable( Node* phi, Node* effect_phi, Node* arith, Node* increment,
+                    Node* init_value, Zone* zone, ArithmeticType arithmeticType,
+                    Node* cond, Node* final_value)
+      :InductionVariable(phi, effect_phi, arith, increment, init_value, zone, arithmeticType),
+       cond_(cond),
+       final_value_(final_value) {}
+
+  Node* cond_;
+  Node* final_value_;
+};
+
 
 class LoopVariableOptimizer {
  public:
