@@ -3650,6 +3650,43 @@ void Assembler::vpd(byte op, XMMRegister dst, XMMRegister src1, Operand src2) {
   emit_sse_operand(dst, src2);
 }
 
+//256
+void Assembler::vps256(byte op, XMMRegister dst, XMMRegister src1,
+                    XMMRegister src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, kNone, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+
+void Assembler::vps256(byte op, XMMRegister dst, XMMRegister src1, Operand src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, kNone, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+
+
+void Assembler::vpd256(byte op, XMMRegister dst, XMMRegister src1,
+                    XMMRegister src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, k66, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+
+void Assembler::vpd256(byte op, XMMRegister dst, XMMRegister src1, Operand src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, k66, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+//end 256
+
 void Assembler::vucomiss(XMMRegister dst, XMMRegister src) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
