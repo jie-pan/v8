@@ -2420,10 +2420,22 @@ CodeGenerator::CodeGenResult CodeGenerator::AssembleArchInstruction(
     // TODO(gdeepti): Get rid of redundant moves for F32x4Splat/Extract below
     case kX64F32x4Splat: {
       XMMRegister dst = i.OutputSimd128Register();
-      if (instr->InputAt(0)->IsFPRegister()) {
-        __ Movss(dst, i.InputDoubleRegister(0));
+
+      if (need_convert) {
+        if (instr->InputAt(0)->IsFPRegister()) {
+          __ vmovss256(dst, dst, i.InputDoubleRegister(0));
+        } else {
+          __ vmovss256(dst, i.InputOperand(0));
+        }
+        __ vshufps256(dst, dst, dst, byte{0x0});
+
       } else {
-        __ Movss(dst, i.InputOperand(0));
+        if (instr->InputAt(0)->IsFPRegister()) {
+          __ Movss(dst, i.InputDoubleRegister(0));
+        } else {
+          __ Movss(dst, i.InputOperand(0));
+        }
+        __ Shufps(dst, dst, byte{0x0});
       }
       __ Shufps(dst, dst, byte{0x0});
       break;
