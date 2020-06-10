@@ -6835,7 +6835,7 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
   if (builder.has_simd())
   {
     mcgraph->graph()->SetSimd(true);
-    PrintF("wasm function #%d has simd\n", func_index);
+    PrintF("wasm-function#%d has simd\n", func_index);
   }
 
   if (func_index >= FLAG_trace_wasm_ast_start &&
