@@ -1937,7 +1937,7 @@ class LoopRevectorizer : public ZoneObject {
             IteratorVariable(induction_var->phi(), induction_var->effect_phi(),
                              induction_var->arith(), induction_var->increment(),
                              induction_var->init_value(), zone_,
-                             induction_var->Type(), cond, final_value);
+                             induction_var->Type(), cond, final_value, false);
 
         iterator_vars_[induction_var->phi()->id()] = iterator_var;
         TRACE("revec--- main induction_var %i\n",

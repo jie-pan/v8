@@ -8,6 +8,7 @@
 #include "src/compiler/functional-list.h"
 #include "src/compiler/node-aux-data.h"
 #include "src/zone/zone-containers.h"
+#include "src/compiler/node-properties.h"
 
 namespace v8 {
 namespace internal {
@@ -73,6 +74,19 @@ class IteratorVariable : public InductionVariable{
  public:
   Node* cond() const { return cond_; }
   Node* final_value() const { return final_value_; }
+  bool compare_with_zero() const { return compare_with_zero_; }
+
+
+  bool TripCountIsConstant() const {
+    if(NodeProperties::IsConstant(init_value()) &&
+       NodeProperties::IsConstant(increment()) &&
+       (compare_with_zero_ || NodeProperties::IsConstant(final_value_))
+       ) {
+      return true;
+    }
+
+    return false;
+  }
 
  private:
   friend class LoopVariableOptimizer;
@@ -80,13 +94,15 @@ class IteratorVariable : public InductionVariable{
 
   IteratorVariable( Node* phi, Node* effect_phi, Node* arith, Node* increment,
                     Node* init_value, Zone* zone, ArithmeticType arithmeticType,
-                    Node* cond, Node* final_value)
+                    Node* cond, Node* final_value, bool compare_with_zero)
       :InductionVariable(phi, effect_phi, arith, increment, init_value, zone, arithmeticType),
        cond_(cond),
-       final_value_(final_value) {}
+       final_value_(final_value),
+       compare_with_zero_(compare_with_zero){}
 
   Node* cond_;
   Node* final_value_;
+  bool compare_with_zero_;
 };
 
 
