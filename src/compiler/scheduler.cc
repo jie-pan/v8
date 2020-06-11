@@ -2041,7 +2041,7 @@ class LoopRevectorizer : public ZoneObject {
     TRACEREVEC("\n");
     Node* init = var->init_value();
     Node* incr = var->increment();
-    Node* final = var->final_value();
+    Node* final_node = var->final_value();
     int64_t init_value = 0;
     int64_t incr_value = 0;
     int64_t final_value = 0;
@@ -2050,16 +2050,16 @@ class LoopRevectorizer : public ZoneObject {
 
     if (init->opcode() == IrOpcode::kInt32Constant &&
         incr->opcode() == IrOpcode::kInt32Constant &&
-        final->opcode() == IrOpcode::kInt32Constant) {
+        final_node->opcode() == IrOpcode::kInt32Constant) {
       init_value = OpParameter<int32_t>(init->op());
       incr_value = OpParameter<int32_t>(incr->op());
-      final_value = OpParameter<int32_t>(final->op());
+      final_value = OpParameter<int32_t>(final_node->op());
     } else if (init->opcode() == IrOpcode::kInt64Constant &&
                incr->opcode() == IrOpcode::kInt64Constant &&
-               final->opcode() == IrOpcode::kInt64Constant) {
+               final_node->opcode() == IrOpcode::kInt64Constant) {
       init_value = OpParameter<int64_t>(init->op());
       incr_value = OpParameter<int64_t>(incr->op());
-      final_value = OpParameter<int64_t>(final->op());
+      final_value = OpParameter<int64_t>(final_node->op());
     } else {
       return false;
     }
@@ -2122,13 +2122,13 @@ class LoopRevectorizer : public ZoneObject {
     TRACEREVEC("\n");
     Node* init = var->init_value();
     Node* incr = var->increment();
-    Node* final = var->final_value();
+    Node* final_node = var->final_value();
 
     IrOpcode::Value op = var->cond()->opcode();
 
     int64_t incr_value = 0;
     if (!NodeProperties::IsConstant(init) &&
-        !NodeProperties::IsConstant(final)) {
+        !NodeProperties::IsConstant(final_node)) {
       // must have >=2 const
       return false;
     }
@@ -2137,9 +2137,9 @@ class LoopRevectorizer : public ZoneObject {
 
     if (incr_value > 0) {
       if (NodeProperties::IsConstant(init)) {
-        if (final->opcode() == IrOpcode::kWord32And) {
-          Node* left = final->InputAt(0);
-          Node* right = final->InputAt(1);
+        if (final_node->opcode() == IrOpcode::kWord32And) {
+          Node* left = final_node->InputAt(0);
+          Node* right = final_node->InputAt(1);
           Node* para = nullptr;
           Node* mask = nullptr;
           int64_t mask_value = 0;
@@ -2186,11 +2186,11 @@ class LoopRevectorizer : public ZoneObject {
           }
         }
 
-        else if (final->opcode() == IrOpcode::kInt32Add) {
+        else if (final_node->opcode() == IrOpcode::kInt32Add) {
             if (op == IrOpcode::kInt32LessThanOrEqual ||
                     op == IrOpcode::kInt64LessThanOrEqual) {
-                if(IsSupportedConstNode(final->InputAt(1)) &&
-                   (GetConstantIntValue(final->InputAt(1)) == -incr_value))
+                if(IsSupportedConstNode(final_node->InputAt(1)) &&
+                   (GetConstantIntValue(final_node->InputAt(1)) == -incr_value))
                 {
                     return true;
                 }
@@ -2215,10 +2215,12 @@ class LoopRevectorizer : public ZoneObject {
   bool CheckIterator(IteratorVariable* var) {
     Node* init = var->init_value();
     Node* incr = var->increment();
-    Node* final = var->final_value();
-
+    Node* final_node = var->final_value();
+    TRACEREVEC("ptr=%p\n", final_node);
+    TRACEREVEC("init #%d, incr #%d, final #%d \n", init->id(),
+          incr->id(), final_node == nullptr? -1: final_node->id());
     if (NodeProperties::IsConstant(init) && NodeProperties::IsConstant(incr) &&
-        NodeProperties::IsConstant(final)) {
+        NodeProperties::IsConstant(final_node)) {
       return CheckConstIterator(var);
     } else {
       return CheckNonconstIterator(var);
@@ -2419,7 +2421,7 @@ class LoopRevectorizer : public ZoneObject {
   void UpdateIteratorCond(IteratorVariable* var) {
     Node* init = var->init_value();
     Node* incr = var->increment();
-    Node* final = var->final_value();
+    Node* final_node = var->final_value();
     int64_t init_value = 0;
     int64_t incr_value = 0;
     int64_t final_value = 0;
@@ -2429,21 +2431,21 @@ class LoopRevectorizer : public ZoneObject {
 
     if (!NodeProperties::IsConstant(init) ||
         !NodeProperties::IsConstant(incr) ||
-        !NodeProperties::IsConstant(final)) {
+        !NodeProperties::IsConstant(final_node)) {
       return;
     }
     if (init->opcode() == IrOpcode::kInt32Constant &&
         incr->opcode() == IrOpcode::kInt32Constant &&
-        final->opcode() == IrOpcode::kInt32Constant) {
+        final_node->opcode() == IrOpcode::kInt32Constant) {
       init_value = OpParameter<int32_t>(init->op());
       incr_value = OpParameter<int32_t>(incr->op());
-      final_value = OpParameter<int32_t>(final->op());
+      final_value = OpParameter<int32_t>(final_node->op());
     } else if (init->opcode() == IrOpcode::kInt64Constant &&
                incr->opcode() == IrOpcode::kInt64Constant &&
-               final->opcode() == IrOpcode::kInt64Constant) {
+               final_node->opcode() == IrOpcode::kInt64Constant) {
       init_value = OpParameter<int64_t>(init->op());
       incr_value = OpParameter<int64_t>(incr->op());
-      final_value = OpParameter<int64_t>(final->op());
+      final_value = OpParameter<int64_t>(final_node->op());
     }
 
     if (incr_value == 0) {
@@ -2451,7 +2453,7 @@ class LoopRevectorizer : public ZoneObject {
     }
 
     if (incr_value > 0) {
-      if (cond->InputAt(1) != final) {
+      if (cond->InputAt(1) != final_node) {
         return;
       }
 
@@ -2461,16 +2463,16 @@ class LoopRevectorizer : public ZoneObject {
       }
     } else {  //<0 only, =0 is exclued
 
-      if (cond->InputAt(0) != final) {
+      if (cond->InputAt(0) != final_node) {
         return;
       }
 
       if (op == IrOpcode::kWord32Equal) {
       } else if (op == IrOpcode::kInt32LessThan) {
         if (final_value == (-incr_value) - 1) {
-          //TransformConstantNode(final, 2, 1);
-          Node* newfinal = CreateConstantNode(final, 2, 1);
-          if(cond->InputAt(0) == final)
+          //TransformConstantNode(final_node, 2, 1);
+          Node* newfinal = CreateConstantNode(final_node, 2, 1);
+          if(cond->InputAt(0) == final_node)
           {
             cond->ReplaceInput(0, newfinal);
           }
@@ -2482,9 +2484,9 @@ class LoopRevectorizer : public ZoneObject {
         }
       } else if (op == IrOpcode::kInt32LessThanOrEqual) {
         if (final_value == (-incr_value)) {
-          //TransformConstantNode(final, 2, 0);
-          Node* newfinal = CreateConstantNode(final, 2, 0);
-          if(cond->InputAt(0) == final)
+          //TransformConstantNode(final_node, 2, 0);
+          Node* newfinal = CreateConstantNode(final_node, 2, 0);
+          if(cond->InputAt(0) == final_node)
           {
             cond->ReplaceInput(0, newfinal);
           }
