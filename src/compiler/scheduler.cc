@@ -1931,23 +1931,41 @@ class LoopRevectorizer : public ZoneObject {
       }
     }
 
+    // implect compare with 0
     Node* left = cond->InputAt(0);
     Node* right = cond->InputAt(1);
+    bool compare_with_zero = false;
     for (auto entry : induction_vars_) {
-      Node* final_value = nullptr;
       InductionVariable* induction_var = entry.second;
-      if (induction_var->arith() == left) {
-        final_value = right;
-      } else if (induction_var->arith() == right) {
-        final_value = left;
+
+      bool found = false;
+      Node* final_value = nullptr;
+      if (cond->opcode() == IrOpcode::kInt32Add) {
+        if (induction_var->arith() == cond) {  // compare with 0
+          found = true;
+
+          compare_with_zero = true;
+          // final_value = scheduler_->mcgraph_->Int32Constant(0);//TODO memory
+          // leak? TRACEREVEC("%s: create constant node#%d\n", __func__,
+          // final_value->id());
+          //fflush(stdout);
+        }
+      } else {
+        if (induction_var->arith() == left) {
+          final_value = right;
+          found = true;
+        } else if (induction_var->arith() == right) {
+          final_value = left;
+          found = true;
+        }
       }
 
-      if (final_value != nullptr) {
+      if (found) {
         IteratorVariable* iterator_var = new (zone_)
             IteratorVariable(induction_var->phi(), induction_var->effect_phi(),
                              induction_var->arith(), induction_var->increment(),
                              induction_var->init_value(), zone_,
-                             induction_var->Type(), cond, final_value, false);
+                             induction_var->Type(), cond, final_value, compare_with_zero);
 
         iterator_vars_[induction_var->phi()->id()] = iterator_var;
         TRACEREVEC("main induction_var %i\n", induction_var->phi()->id());
@@ -2047,19 +2065,36 @@ class LoopRevectorizer : public ZoneObject {
     int64_t final_value = 0;
 
     IrOpcode::Value op = var->cond()->opcode();
-
+    if(var->compare_with_zero())
+    {
+      final_value = 0;
+    }
     if (init->opcode() == IrOpcode::kInt32Constant &&
-        incr->opcode() == IrOpcode::kInt32Constant &&
-        final_node->opcode() == IrOpcode::kInt32Constant) {
+        incr->opcode() == IrOpcode::kInt32Constant) {
+
       init_value = OpParameter<int32_t>(init->op());
       incr_value = OpParameter<int32_t>(incr->op());
-      final_value = OpParameter<int32_t>(final_node->op());
+
+      if(var->compare_with_zero())
+      {
+        final_value = 0;
+      }
+      else
+      {
+        //final_node->opcode() == IrOpcode::kInt32Constant
+        final_value = OpParameter<int32_t>(final_node->op());
+      }
     } else if (init->opcode() == IrOpcode::kInt64Constant &&
-               incr->opcode() == IrOpcode::kInt64Constant &&
-               final_node->opcode() == IrOpcode::kInt64Constant) {
+               incr->opcode() == IrOpcode::kInt64Constant) {
       init_value = OpParameter<int64_t>(init->op());
       incr_value = OpParameter<int64_t>(incr->op());
-      final_value = OpParameter<int64_t>(final_node->op());
+
+      if(var->compare_with_zero()) {
+        final_value = 0;
+      } else {
+        //final_node->opcode() == IrOpcode::kInt64Constant
+        final_value = OpParameter<int64_t>(final_node->op());
+      }
     } else {
       return false;
     }
@@ -2127,17 +2162,19 @@ class LoopRevectorizer : public ZoneObject {
     IrOpcode::Value op = var->cond()->opcode();
 
     int64_t incr_value = 0;
-    if (!NodeProperties::IsConstant(init) &&
-        !NodeProperties::IsConstant(final_node)) {
-      // must have >=2 const
-      return false;
+    if (!var->compare_with_zero()) {
+      if (!NodeProperties::IsConstant(init) &&
+          !NodeProperties::IsConstant(final_node)) {
+        // must have >=2 const
+        return false;
+      }
     }
 
     incr_value = GetConstantIntValue(incr);
 
     if (incr_value > 0) {
       if (NodeProperties::IsConstant(init)) {
-        if (final_node->opcode() == IrOpcode::kWord32And) {
+        if ((!var->compare_with_zero()) && final_node->opcode() == IrOpcode::kWord32And) {
           Node* left = final_node->InputAt(0);
           Node* right = final_node->InputAt(1);
           Node* para = nullptr;
@@ -2186,15 +2223,14 @@ class LoopRevectorizer : public ZoneObject {
           }
         }
 
-        else if (final_node->opcode() == IrOpcode::kInt32Add) {
-            if (op == IrOpcode::kInt32LessThanOrEqual ||
-                    op == IrOpcode::kInt64LessThanOrEqual) {
-                if(IsSupportedConstNode(final_node->InputAt(1)) &&
-                   (GetConstantIntValue(final_node->InputAt(1)) == -incr_value))
-                {
-                    return true;
-                }
+        else if ((!var->compare_with_zero()) && (final_node->opcode() == IrOpcode::kInt32Add)) {
+          if (op == IrOpcode::kInt32LessThanOrEqual ||
+              op == IrOpcode::kInt64LessThanOrEqual) {
+            if (IsSupportedConstNode(final_node->InputAt(1)) &&
+                (GetConstantIntValue(final_node->InputAt(1)) == -incr_value)) {
+              return true;
             }
+          }
         }
         /*
             for (Edge edge : node->use_edges()) {
@@ -2205,7 +2241,10 @@ class LoopRevectorizer : public ZoneObject {
             */
       }
 
-    } else {
+    } else {  // incr_value <= 0
+      if (var->compare_with_zero()) {
+        return true;
+      }
     }
 
     TRACEREVEC("exit\n");
@@ -2219,8 +2258,7 @@ class LoopRevectorizer : public ZoneObject {
     TRACEREVEC("ptr=%p\n", final_node);
     TRACEREVEC("init #%d, incr #%d, final #%d \n", init->id(),
           incr->id(), final_node == nullptr? -1: final_node->id());
-    if (NodeProperties::IsConstant(init) && NodeProperties::IsConstant(incr) &&
-        NodeProperties::IsConstant(final_node)) {
+    if (var->TripCountIsConstant()) {
       return CheckConstIterator(var);
     } else {
       return CheckNonconstIterator(var);
@@ -2641,8 +2679,9 @@ class LoopRevectorizer : public ZoneObject {
 };
 
 const std::set<IrOpcode::Value> LoopRevectorizer::supported_opcodes_ = {
-    /*
     IrOpcode::kF32x4Splat,
+
+    /*
     IrOpcode::kF32x4ExtractLane,
     IrOpcode::kF32x4ReplaceLane,
     IrOpcode::kF32x4SConvertI32x4,
