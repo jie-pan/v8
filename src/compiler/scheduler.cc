@@ -28,6 +28,15 @@ namespace compiler {
     if (FLAG_trace_turbo_scheduler) PrintF(__VA_ARGS__); \
   } while (false)
 
+#define TRACEREVEC(...)                                  \
+  do {                                                   \
+    if (FLAG_wasm_revec) {                               \
+      PrintF("revec--- %s:%d ", __func__, __LINE__);     \
+      PrintF(__VA_ARGS__);                               \
+    }                                                    \
+  } while (false)
+
+
 Scheduler::Scheduler(Zone* zone, Graph* graph, MachineGraph* mcgraph, Schedule* schedule, Flags flags,
                      size_t node_count_hint, TickCounter* tick_counter)
     : zone_(zone),
@@ -64,7 +73,7 @@ Schedule* Scheduler::ComputeSchedule(Zone* zone, Graph* graph, Flags flags,
   if (FLAG_wasm_revec && graph->HasSimd()) {
     // TODO: check hardware avx support
     if (function_name != nullptr) {
-      TRACE("revec--- function %s ", function_name);
+      TRACEREVEC("function %s ", function_name);
       //PrintF("revec--- function %s \n", function_name);
     }
     scheduler.SelectLoopAndUpdateGraph();
@@ -1884,8 +1893,8 @@ class LoopRevectorizer : public ZoneObject {
 
     Node* incr = arith->InputAt(1);
 
-    TRACE(
-        "revec--- induction var: phi %i, effect_phi %i, arith %i, incr "
+    TRACEREVEC(
+        "induction var: phi %i, effect_phi %i, arith %i, incr "
         "%i, init %i, type %i\n",
         phi->id(), effect_phi->id(), arith->id(), incr->id(), initial->id(),
         arithmeticType);
@@ -1895,7 +1904,7 @@ class LoopRevectorizer : public ZoneObject {
 
   void DetectInductionVariables(Node* loop) {
     if (loop->op()->ControlInputCount() != 2) return;
-    TRACE("revec--- Loop variables for loop %i:\n", loop->id());
+    TRACEREVEC("Loop variables for loop %i:\n", loop->id());
     for (Edge edge : loop->use_edges()) {
       if (NodeProperties::IsControlEdge(edge) &&
           edge.from()->opcode() == IrOpcode::kPhi) {
@@ -1909,6 +1918,7 @@ class LoopRevectorizer : public ZoneObject {
   }
 
   void TryGetMainIterator(Node* node) {
+    TRACEREVEC("#%i\n", node->id());
     Node* branch = node->InputAt(0);
     Node* cond = branch->InputAt(0);
     if (cond->opcode() == IrOpcode::kWord32Equal) {
@@ -1940,8 +1950,7 @@ class LoopRevectorizer : public ZoneObject {
                              induction_var->Type(), cond, final_value, false);
 
         iterator_vars_[induction_var->phi()->id()] = iterator_var;
-        TRACE("revec--- main induction_var %i\n",
-              induction_var->phi()->id());
+        TRACEREVEC("main induction_var %i\n", induction_var->phi()->id());
       }
     }
   }
@@ -1949,7 +1958,7 @@ class LoopRevectorizer : public ZoneObject {
   void DetectMainIterator(Node* loop) {
     if (loop->op()->ControlInputCount() != 2) return;
 
-    TRACE("revec--- Loop Count for loop %i\n", loop->id());
+    TRACEREVEC("Loop Count for loop %i\n", loop->id());
     int max = NodeProperties::PastControlIndex(loop);
     for (int i = NodeProperties::FirstControlIndex(loop); i < max; i++) {
       Node* input = loop->InputAt(i);
@@ -1974,11 +1983,11 @@ class LoopRevectorizer : public ZoneObject {
     for (Node* node : loop_tree_->LoopNodes(loop)) {
       if (NodeProperties::IsSimd(node)) {
         has_simd = true;
-        TRACE("revec--- found simd node #%d:%s\n", node->id(),
+        TRACEREVEC("found simd node #%d:%s\n", node->id(),
               node->op()->mnemonic());
         if (supported_opcodes_.find(node->opcode()) ==
             supported_opcodes_.end()) {
-          TRACE("revec--- unsupported simd node #%d:%s\n", node->id(),
+          TRACEREVEC("unsupported simd node #%d:%s\n", node->id(),
                 node->op()->mnemonic());
           return true;
         }
@@ -2029,6 +2038,7 @@ class LoopRevectorizer : public ZoneObject {
   bool IsEven(int64_t number) { return (number & 1) == 0; }
 
   bool CheckConstIterator(IteratorVariable* var) {
+    TRACEREVEC("\n");
     Node* init = var->init_value();
     Node* incr = var->increment();
     Node* final = var->final_value();
@@ -2109,6 +2119,7 @@ class LoopRevectorizer : public ZoneObject {
   }
 
   bool CheckNonconstIterator(IteratorVariable* var) {
+    TRACEREVEC("\n");
     Node* init = var->init_value();
     Node* incr = var->increment();
     Node* final = var->final_value();
@@ -2196,6 +2207,8 @@ class LoopRevectorizer : public ZoneObject {
 
     } else {
     }
+
+    TRACEREVEC("exit\n");
     return false;
   }
 
@@ -2252,6 +2265,7 @@ class LoopRevectorizer : public ZoneObject {
           if (NodeProperties::IsSimd(input) &&
               supported_init_opcode.find(input->opcode()) == supported_init_opcode.end()) {
             // BasicBlock* block = schedule_->block(node);
+            TRACEREVEC("#%d's input #%d out of loop\n", node->id(), input->id());
             return true;
           }
         }
@@ -2262,6 +2276,7 @@ class LoopRevectorizer : public ZoneObject {
       for (Node* use : node->uses()) {
         if (!loop_tree_->Contains(loop, use)) {  // use of nodes outside loop
           if (NodeProperties::IsSimd(use)) {
+            TRACEREVEC("#%d is used by #%d\n", node->id(), use->id());
             return true;
           }
         }
@@ -2274,33 +2289,33 @@ class LoopRevectorizer : public ZoneObject {
 
   bool CanReVectorize(LoopTree::Loop* loop) {
     if (HasMultipleBackEdge(loop)) {
-      TRACE("revec--- HasMultipleBackEdge return\n");
+      TRACEREVEC("HasMultipleBackEdge return\n");
       return false;
     }
     if (HasUnsupportedOpcode(loop)) {
-      TRACE("revec--- HasUnsupportedOpcode return\n");
+      TRACEREVEC("HasUnsupportedOpcode return\n");
       return false;
     }
     if (HasAdditionalFunctionCall(loop)) {
-      TRACE("revec--- HasFunctionCall return\n");
+      TRACEREVEC("HasFunctionCall return\n");
       return false;
     }
     if (HasUnsupportedInductionVariables(loop)) {
-      TRACE("revec--- HasUnsupportedInductionVariables return\n");
+      TRACEREVEC("HasUnsupportedInductionVariables return\n");
       return false;
     }
     if (HasUnsupportedMainIterator(loop)) {
-      TRACE("revec--- HasUnsupportedMainIterator return\n");
+      TRACEREVEC("HasUnsupportedMainIterator return\n");
       return false;
     }
     if (HasOutsideDependency(loop)) {
-      TRACE("revec--- HasOutsideDependency return\n");
+      TRACEREVEC("HasOutsideDependency return\n");
       return false;
     }
 
     // TODO:
     if (HasMemoryDependency()) {
-      TRACE("revec--- HasMemoryDependency return");
+      TRACEREVEC("HasMemoryDependency return");
       return false;
     }
 
@@ -2310,7 +2325,7 @@ class LoopRevectorizer : public ZoneObject {
   // node->param = node->param * multiplier + addend
   void TransformConstantNode(Node* node, int multiplier, int addend) {
     if (!IsSupportedConstNode(node)) {
-      TRACE("revec--- can't double non-const node\n");
+      TRACEREVEC("can't double non-const node\n");
       return;
     }
 
@@ -2348,7 +2363,7 @@ class LoopRevectorizer : public ZoneObject {
                                */
       op1->SetParameter(value * multiplier + addend);
     } else {
-      TRACE("revec--- Int64 and Int32 const only!, unimplement\n");
+      TRACEREVEC("Int64 and Int32 const only!, unimplement\n");
     }
   }
 #endif
@@ -2357,7 +2372,7 @@ class LoopRevectorizer : public ZoneObject {
   Node* CreateConstantNode(Node* old_node, int multiplier, int addend) {
     Node* new_node = nullptr;
     if (!IsSupportedConstNode(old_node)) {
-      TRACE("revec--- can't double non-const node\n");
+      TRACEREVEC("can't double non-const node\n");
       return nullptr;
     }
     if (old_node->opcode() == IrOpcode::kInt32Constant) {
@@ -2393,7 +2408,7 @@ class LoopRevectorizer : public ZoneObject {
                 scheduler_->node_data_[incr->id()];
 
             arith->ReplaceInput(1, new_incr);
-            TRACE("revec--- create constant node %d->%d\n", incr->id(),
+            TRACEREVEC("create constant node %d->%d\n", incr->id(),
                   new_incr->id());
           }
         }
@@ -2503,16 +2518,15 @@ class LoopRevectorizer : public ZoneObject {
   void ReVectorizeIfPossible(LoopTree::Loop* loop) {
     Node* loop_node = loop_tree_->GetLoopControl(loop);
 
-    TRACE("revec--- try to revec loop %i:\n", loop_node->id());
+    TRACEREVEC("try to revec loop %i:\n", loop_node->id());
     DetectInductionVariables(loop_node);
     DetectMainIterator(loop_node);
     if (CanReVectorize(loop)) {
       selected_loop_.insert(loop);
       UpdateGraph(loop);
-      TRACE("revec--- finish revec loop %i:\n\n", loop_node->id());
-      //PrintF("revec--- finish revec loop %i:\n\n", loop_node->id());
+      TRACEREVEC("finish revec loop %i:\n\n", loop_node->id());
     } else {
-      TRACE("revec--- can't revec loop %i:\n\n", loop_node->id());
+      TRACEREVEC("can't revec loop %i:\n\n", loop_node->id());
     }
   }
 
@@ -2550,7 +2564,7 @@ class LoopRevectorizer : public ZoneObject {
         for (Node* const node : *block) {
           if (node->opcode() == IrOpcode::kLoop && node == loop_node) {
             header = block;
-            TRACE("revec--- block id:%d for loop node #%d:%s\n",
+            TRACEREVEC("block id:%d for loop node #%d:%s\n",
                   header->rpo_number(), node->id(), node->op()->mnemonic());
             return header;
           }
@@ -2567,7 +2581,7 @@ class LoopRevectorizer : public ZoneObject {
     if (header != nullptr) {
       for (auto block : *blocks) {
         if (header->LoopContains(block)) {
-          TRACE("revec--- mark block id:%d for loop convert\n",
+          TRACEREVEC("mark block id:%d for loop convert\n",
                 block->rpo_number());
           block->set_need_convert(true);
         }
@@ -2578,7 +2592,7 @@ class LoopRevectorizer : public ZoneObject {
   // TODO: handle reduction variable
   void MarkBlockOutLoop(LoopTree::Loop* loop) {
 
-    TRACE("revec--- enter %s\n", __func__);
+    TRACEREVEC("\n");
     std::set<IrOpcode::Value> supported_init_opcode = {
       IrOpcode::kS128Zero,
       IrOpcode::kS128Xor,
@@ -2595,7 +2609,7 @@ class LoopRevectorizer : public ZoneObject {
               supported_init_opcode.find(input->opcode()) != supported_init_opcode.end()) {
               BasicBlock* block = schedule_->block(input);
 
-              TRACE("revec--- mark out block id:%d for loop convert\n",
+              TRACEREVEC("mark out block id:%d for loop convert\n",
                   block->rpo_number());
               block->set_need_convert(true);
           }
@@ -2774,13 +2788,13 @@ const std::set<IrOpcode::Value> LoopRevectorizer::supported_opcodes_ = {
 // -----------------------------------------------------------------------------
 // Phase 7:
 void Scheduler::SelectLoopAndUpdateGraph() {
-  TRACE("--- %s -------------------------------------------\n", __func__);
+  TRACEREVEC("\n");
   loop_revectorizer_ = new (zone_) LoopRevectorizer(zone_, this);
   loop_revectorizer_->SelectLoopAndUpdateGraph();
 }
 // Phase 7:
 void Scheduler::MarkBlockInLoops() {
-  TRACE("--- %s -------------------------------------------\n", __func__);
+  TRACEREVEC("\n");
   loop_revectorizer_->MarkBlockInLoops();
 }
 
