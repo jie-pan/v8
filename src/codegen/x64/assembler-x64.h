@@ -1537,6 +1537,10 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
     vps(0xC6, dst, src1, src2, imm8);
   }
 
+  void vshufps256(XMMRegister dst, XMMRegister src1, XMMRegister src2, byte imm8) {
+    vps256(0xC6, dst, src1, src2, imm8);
+  }
+
   void vmovaps(XMMRegister dst, XMMRegister src) { vps(0x28, dst, xmm0, src); }
   void vmovups(XMMRegister dst, XMMRegister src) { vps(0x10, dst, xmm0, src); }
   void vmovups(XMMRegister dst, Operand src) { vps(0x10, dst, xmm0, src); }
@@ -1702,6 +1706,8 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   //256bits
   void vps256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
   void vps256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+  void vps256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
+           byte imm8);
   void vpd256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
   void vpd256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
 
