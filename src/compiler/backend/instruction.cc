@@ -584,7 +584,7 @@ void PhiInstruction::RenameInput(size_t offset, int virtual_register) {
 InstructionBlock::InstructionBlock(Zone* zone, RpoNumber rpo_number,
                                    RpoNumber loop_header, RpoNumber loop_end,
                                    RpoNumber dominator, bool deferred,
-                                   bool handler)
+                                   bool handler, bool need_convert)
     : successors_(zone),
       predecessors_(zone),
       phis_(zone),
@@ -594,7 +594,8 @@ InstructionBlock::InstructionBlock(Zone* zone, RpoNumber rpo_number,
       loop_end_(loop_end),
       dominator_(dominator),
       deferred_(deferred),
-      handler_(handler) {}
+      handler_(handler),
+      need_convert_(need_convert) {}
 
 size_t InstructionBlock::PredecessorIndexOf(RpoNumber rpo_number) const {
   size_t j = 0;
@@ -621,7 +622,7 @@ static InstructionBlock* InstructionBlockFor(Zone* zone,
       !block->empty() && block->front()->opcode() == IrOpcode::kIfException;
   InstructionBlock* instr_block = zone->New<InstructionBlock>(
       zone, GetRpo(block), GetRpo(block->loop_header()), GetLoopEndRpo(block),
-      GetRpo(block->dominator()), block->deferred(), is_handler);
+      GetRpo(block->dominator()), block->deferred(), is_handler, block->need_convert());
   // Map successors and precessors
   instr_block->successors().reserve(block->SuccessorCount());
   for (BasicBlock* successor : block->successors()) {
