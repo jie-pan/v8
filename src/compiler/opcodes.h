@@ -1091,6 +1091,10 @@ class V8_EXPORT_PRIVATE IrOpcode {
     return kJSCreateFunctionContext <= value && value <= kJSCreateBlockContext;
   }
 
+  static bool IsSimdOpcode(Value value) {
+    return kF64x2Splat <= value && value <= kStoreLane;
+  }
+
   // These opcodes *must* collect full feedback in NCI code in order to avoid
   // deopts after tier-up to Turbofan.
   // TODO(jgruber,v8:8888): The goal is for this to be the empty set at some
