@@ -1413,7 +1413,7 @@ class V8_EXPORT_PRIVATE InstructionBlock final
  public:
   InstructionBlock(Zone* zone, RpoNumber rpo_number, RpoNumber loop_header,
                    RpoNumber loop_end, RpoNumber dominator, bool deferred,
-                   bool handler);
+                   bool handler, bool need_convert);
 
   // Instruction indexes (used by the register allocator).
   int first_instruction_index() const {
@@ -1486,6 +1486,9 @@ class V8_EXPORT_PRIVATE InstructionBlock final
   void mark_must_deconstruct_frame() { must_deconstruct_frame_ = true; }
   void clear_must_deconstruct_frame() { must_deconstruct_frame_ = false; }
 
+  bool need_convert() const { return need_convert_; }
+  void set_need_convert() { need_convert_ = true; }
+
  private:
   Successors successors_;
   Predecessors predecessors_;
@@ -1504,6 +1507,7 @@ class V8_EXPORT_PRIVATE InstructionBlock final
   bool needs_frame_ = false;
   bool must_construct_frame_ = false;
   bool must_deconstruct_frame_ = false;
+  bool need_convert_ = false;
 };
 
 class InstructionSequence;
