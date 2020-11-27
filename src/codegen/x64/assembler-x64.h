@@ -1518,10 +1518,20 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }
   void vmovss(XMMRegister dst, Operand src) { vss(0x10, dst, xmm0, src); }
   void vmovss(Operand dst, XMMRegister src) { vss(0x11, src, xmm0, dst); }
+
+  void vmovss256(XMMRegister dst, XMMRegister src1, XMMRegister src2) {
+    vss256(0x10, dst, src1, src2);
+  }
+  void vmovss256(XMMRegister dst, Operand src) { vss256(0x10, dst, xmm0, src); }
+  void vmovss256(Operand dst, XMMRegister src) { vss256(0x11, src, xmm0, dst); }
+
   void vucomiss(XMMRegister dst, XMMRegister src);
   void vucomiss(XMMRegister dst, Operand src);
   void vss(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
   void vss(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+
+  void vss256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
+  void vss256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
 
   void vshufps(XMMRegister dst, XMMRegister src1, XMMRegister src2, byte imm8) {
     vps(0xC6, dst, src1, src2, imm8);

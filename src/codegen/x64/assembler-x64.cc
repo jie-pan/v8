@@ -3762,6 +3762,23 @@ void Assembler::vss(byte op, XMMRegister dst, XMMRegister src1, Operand src2) {
   emit_sse_operand(dst, src2);
 }
 
+void Assembler::vss256(byte op, XMMRegister dst, XMMRegister src1,
+                    XMMRegister src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, kF3, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+
+void Assembler::vss256(byte op, XMMRegister dst, XMMRegister src1, Operand src2) {
+  DCHECK(IsEnabled(AVX));
+  EnsureSpace ensure_space(this);
+  emit_vex_prefix(dst, src1, src2, kL256, kF3, k0F, kWIG);
+  emit(op);
+  emit_sse_operand(dst, src2);
+}
+
 void Assembler::bmi1q(byte op, Register reg, Register vreg, Register rm) {
   DCHECK(IsEnabled(BMI1));
   EnsureSpace ensure_space(this);
