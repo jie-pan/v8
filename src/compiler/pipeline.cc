@@ -2104,7 +2104,8 @@ struct ComputeSchedulePhase {
         temp_zone, data->graph(),
         data->info()->splitting() ? Scheduler::kSplitNodes
                                   : Scheduler::kNoFlags,
-        &data->info()->tick_counter(), data->profile_data());
+        &data->info()->tick_counter(), data->profile_data(),
+        data->mcgraph(), data->info()->GetDebugName().get());
     data->set_schedule(schedule);
   }
 };
