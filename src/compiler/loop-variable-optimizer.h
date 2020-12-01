@@ -8,6 +8,7 @@
 #include "src/compiler/functional-list.h"
 #include "src/compiler/node-aux-data.h"
 #include "src/zone/zone-containers.h"
+#include "src/compiler/node-properties.h"
 
 namespace v8 {
 namespace internal {
@@ -42,7 +43,9 @@ class InductionVariable : public ZoneObject {
  private:
   friend class LoopVariableOptimizer;
   friend Zone;
+  friend class LoopRevectorizer;
 
+ protected:
   InductionVariable(Node* phi, Node* effect_phi, Node* arith, Node* increment,
                     Node* init_value, Zone* zone, ArithmeticType arithmeticType)
       : phi_(phi),
@@ -54,6 +57,7 @@ class InductionVariable : public ZoneObject {
         upper_bounds_(zone),
         arithmeticType_(arithmeticType) {}
 
+ private:
   void AddUpperBound(Node* bound, ConstraintKind kind);
   void AddLowerBound(Node* bound, ConstraintKind kind);
 
@@ -66,6 +70,42 @@ class InductionVariable : public ZoneObject {
   ZoneVector<Bound> upper_bounds_;
   ArithmeticType arithmeticType_;
 };
+
+class IteratorVariable : public InductionVariable{
+ public:
+  IteratorVariable( Node* phi, Node* effect_phi, Node* arith, Node* increment,
+                    Node* init_value, Zone* zone, ArithmeticType arithmeticType,
+                    Node* cond, Node* final_value, bool compare_with_zero)
+      :InductionVariable(phi, effect_phi, arith, increment, init_value, zone, arithmeticType),
+       cond_(cond),
+       final_value_(final_value),
+       compare_with_zero_(compare_with_zero){}
+
+  Node* cond() const { return cond_; }
+  Node* final_value() const { return final_value_; }
+  bool compare_with_zero() const { return compare_with_zero_; }
+
+
+  bool TripCountIsConstant() const {
+    if(NodeProperties::IsConstant(init_value()) &&
+       NodeProperties::IsConstant(increment()) &&
+       (compare_with_zero_ || NodeProperties::IsConstant(final_value_))
+       ) {
+      return true;
+    }
+
+    return false;
+  }
+
+ private:
+  friend class LoopVariableOptimizer;
+  friend class LoopRevectorizer;
+
+  Node* cond_;
+  Node* final_value_;
+  bool compare_with_zero_;
+};
+
 
 class LoopVariableOptimizer {
  public:
