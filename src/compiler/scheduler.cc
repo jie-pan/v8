@@ -2050,7 +2050,21 @@ class LoopRevectorizer : public ZoneObject {
         has_simd = true;
         TRACEREVEC("found simd node #%d:%s\n", node->id(),
               node->op()->mnemonic());
-        if (supported_opcodes_.find(node->opcode()) ==
+        if(node->opcode() == IrOpcode::kLoadTransform)
+        {
+            LoadTransformParameters params = LoadTransformParametersOf(node->op());
+
+            /*
+            if(params.transfromation != LoadTransformation::kS128Load8Splat &&
+               params.transfromation != LoadTransformation::kS128Load16Splat &&
+               params.transfromation != LoadTransformation::kS128Load32Splat &&
+               params.transfromation != LoadTransformation::kS128Load64Splat)
+               */
+            if(params.transformation != LoadTransformation::kS128Load32Splat)
+            {
+                return true;
+            }
+        } else if (supported_opcodes_.find(node->opcode()) ==
             supported_opcodes_.end()) {
           TRACEREVEC("unsupported simd node #%d:%s\n", node->id(),
                 node->op()->mnemonic());
