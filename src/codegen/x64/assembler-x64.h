@@ -1311,6 +1311,7 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vmovddup(XMMRegister dst, XMMRegister src);
   void vmovddup(XMMRegister dst, Operand src);
   void vbroadcastss(XMMRegister dst, Operand src);
+  void vbroadcastss256(XMMRegister dst, Operand src);
 
   void fma_instr(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
                  VectorLength l, SIMDPrefix pp, LeadingOpcode m, VexW w);
