@@ -29,6 +29,8 @@ namespace compiler {
     if (FLAG_trace_turbo_scheduler) PrintF(__VA_ARGS__); \
   } while (false)
 
+#define TRACEREVEC(...)
+/*
 #define TRACEREVEC(...)                                  \
   do {                                                   \
     if (FLAG_wasm_revec) {                               \
@@ -37,6 +39,7 @@ namespace compiler {
     }                                                    \
   } while (false)
 
+ */
 
 Scheduler::Scheduler(Zone* zone, Graph* graph, MachineGraph* mcgraph, Schedule* schedule, Flags flags,
                      size_t node_count_hint, TickCounter* tick_counter,
@@ -79,7 +82,7 @@ Schedule* Scheduler::ComputeSchedule(Zone* zone, Graph* graph, Flags flags,
     if (function_name != nullptr) {
       TRACEREVEC("function %s \n", function_name);
     }
-    scheduler.SelectLoopAndUpdateGraph();
+    //scheduler.SelectLoopAndUpdateGraph();
   }
 
   scheduler.BuildCFG();
@@ -93,7 +96,15 @@ Schedule* Scheduler::ComputeSchedule(Zone* zone, Graph* graph, Flags flags,
   scheduler.SealFinalSchedule();
 
   if (FLAG_wasm_revec && graph->HasSimd()) {
-    scheduler.MarkBlockInLoops();
+    //scheduler.MarkBlockInLoops();
+
+
+    //TODO hack
+    //const char * hotKernel = "wasm-function#497";
+    const char * hotKernel = "wasm-function#518";
+    if((function_name != nullptr) && (strcmp(function_name, hotKernel) == 0)) {
+      scheduler.MarkFunctionBlocks();
+    }
   }
 
   return schedule;
@@ -2900,6 +2911,15 @@ void Scheduler::SelectLoopAndUpdateGraph() {
 void Scheduler::MarkBlockInLoops() {
   TRACEREVEC("\n");
   loop_revectorizer_->MarkBlockInLoops();
+}
+
+void Scheduler::MarkFunctionBlocks() {
+  BasicBlockVector* blocks = schedule_->rpo_order();
+
+  for (auto block : *blocks) {
+    TRACEREVEC("hack!!! mark block #%d of %s\n",  block->rpo_number(), hotKernel);
+    block->set_need_convert(true);
+  }
 }
 
 #undef TRACE
