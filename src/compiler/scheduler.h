@@ -144,6 +144,7 @@ class V8_EXPORT_PRIVATE Scheduler {
   friend class LoopRevectorizer;
   void SelectLoopAndUpdateGraph();
   void MarkBlockInLoops();
+  void MarkFunctionBlocks();
 
   void FuseFloatingControl(BasicBlock* block, Node* node);
   void MovePlannedNodes(BasicBlock* from, BasicBlock* to);
