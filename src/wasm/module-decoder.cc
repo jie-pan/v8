@@ -1147,6 +1147,8 @@ class ModuleDecoderImpl : public Decoder {
       hint.top_tier =
           static_cast<WasmCompilationHintTier>(hint_byte >> 4 & 0x3);
 
+      hint.revec_hint =
+          static_cast<WasmCompilationRevecHint>(hint_byte >> 6 & 0x3);
       // Ensure that the top tier never downgrades a compilation result.
       // If baseline and top tier are the same compilation will be invoked only
       // once.
@@ -1155,6 +1157,12 @@ class ModuleDecoderImpl : public Decoder {
         decoder.errorf(decoder.pc(),
                        "Invalid compilation hint %#x (forbidden downgrade)",
                        hint_byte);
+      }
+
+      //panjie
+      if(hint.revec_hint != WasmCompilationRevecHint::kDefault)
+      {
+           PrintF("decode: %u's hint =  %u,", i, (unsigned)hint_byte );
       }
 
       // Happily accept compilation hint.

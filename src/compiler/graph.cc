@@ -23,7 +23,8 @@ Graph::Graph(Zone* zone)
       mark_max_(0),
       next_node_id_(0),
       decorators_(zone),
-      has_simd_(false) {
+      has_simd_(false),
+      revec_hint_(wasm::WasmCompilationRevecHint::kDefault) {
   // Nodes use compressed pointers, so zone must support pointer compression.
   // If the check fails, ensure the zone is created with kCompressGraphZone
   // flag.

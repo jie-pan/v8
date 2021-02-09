@@ -17,7 +17,7 @@
                                                                                \
   /* No official proposal (yet?). */                                           \
   /* V8 side owner: clemensb */                                                \
-  V(compilation_hints, "compilation hints section", false)                     \
+  V(compilation_hints, "compilation hints section", true)                      \
                                                                                \
   /* GC proposal (early prototype, might change dramatically) */               \
   /* Official proposal: https://github.com/WebAssembly/gc */                   \
