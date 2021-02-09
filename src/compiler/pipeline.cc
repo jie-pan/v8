@@ -531,7 +531,8 @@ class PipelineData {
         info()->GetPoisoningMitigationLevel(), assembler_options_,
         info_->builtin_index(), max_unoptimized_frame_height(),
         max_pushed_argument_count(), std::move(buffer),
-        FLAG_trace_turbo_stack_accesses ? debug_name_.get() : nullptr);
+        //FLAG_trace_turbo_stack_accesses ? debug_name_.get() : nullptr);
+        debug_name_.get());
   }
 
   void BeginPhaseKind(const char* phase_kind_name) {
