@@ -7772,6 +7772,18 @@ Handle<Code> CompileCWasmEntry(Isolate* isolate, const wasm::FunctionSig* sig,
 
 namespace {
 
+wasm::WasmCompilationRevecHint GetRevecHint(const wasm::WasmModule* module,
+                    uint32_t func_index) {
+  DCHECK_LE(module->num_imported_functions, func_index);
+  uint32_t hint_index = declared_function_index(module, func_index);
+  const std::vector<wasm::WasmCompilationHint>& compilation_hints =
+      module->compilation_hints;
+  if (hint_index < compilation_hints.size()) {
+    return compilation_hints[hint_index].revec_hint;
+  }
+  return wasm::WasmCompilationRevecHint::kDefault;
+}
+
 bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
                                wasm::CompilationEnv* env,
                                const wasm::FunctionBody& func_body,
@@ -7843,6 +7855,14 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
     mcgraph->graph()->SetSimd(true);
     //PrintF("wasm function#%d has simd\n", func_index);
   }
+
+  wasm::WasmCompilationRevecHint revec_hint = GetRevecHint(env->module, func_index);
+  if (revec_hint != wasm::WasmCompilationRevecHint::kDefault) {
+    mcgraph->graph()->SetRevecHint(revec_hint);
+
+    PrintF("wasm function#%d has revec hint\n", func_index);
+  }
+
 
   if (func_index >= FLAG_trace_wasm_ast_start &&
       func_index < FLAG_trace_wasm_ast_end) {

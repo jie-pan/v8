@@ -101,8 +101,20 @@ Schedule* Scheduler::ComputeSchedule(Zone* zone, Graph* graph, Flags flags,
 
     //TODO hack
     //const char * hotKernel = "wasm-function#497";
-    const char * hotKernel = "wasm-function#518";
-    if((function_name != nullptr) && (strcmp(function_name, hotKernel) == 0)) {
+    //const char * hotKernel = "wasm-function#518";//end2end bench
+    //const char * hotKernel = "wasm-function#120";//f32-gemm 4x16
+    //const char * hotKernel = "wasm-function#116";//f32-gemm 4x8
+#if 1
+    wasm::WasmCompilationRevecHint hint = graph->GetRevecHint();
+    if (hint != wasm::WasmCompilationRevecHint::kDefault) {
+#else
+    char buf[255];
+    snprintf(buf,sizeof(buf), "wasm-function#%d", FLAG_wasm_revec_function_id);
+    if((function_name != nullptr) && (strcmp(function_name, buf) == 0)) {
+#endif
+
+      //TRACEREVEC("revec function %s \n", function_name);
+      PrintF("revec function %s \n", function_name);
       scheduler.MarkFunctionBlocks();
     }
   }

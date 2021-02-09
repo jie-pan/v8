@@ -912,6 +912,7 @@ DEFINE_BOOL(experimental_wasm_allow_huge_modules, false,
             "allow wasm modules bigger than 1GB, but below ~2GB")
 
 DEFINE_BOOL(wasm_revec, false, "wasm loop re-vectorization")
+DEFINE_INT(wasm_revec_function_id, -1, "function id for wasm re-vectorization")
 
 // Profiler flags.
 DEFINE_INT(frame_count, 1, "number of stack frames inspected by the profiler")

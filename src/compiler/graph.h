@@ -11,6 +11,7 @@
 #include "src/common/globals.h"
 #include "src/zone/zone-containers.h"
 #include "src/zone/zone.h"
+#include "src/wasm/wasm-module.h"
 
 namespace v8 {
 namespace internal {
@@ -97,7 +98,11 @@ class V8_EXPORT_PRIVATE Graph final : public NON_EXPORTED_BASE(ZoneObject) {
   void Print() const;
 
   bool HasSimd() const { return has_simd_; }
-  void SetSimd(bool has_simd) { has_simd_ = has_simd;}
+  void SetSimd(bool has_simd) { has_simd_ = has_simd; }
+
+  void SetRevecHint(wasm::WasmCompilationRevecHint revec_hint) { revec_hint_ = revec_hint; }
+  wasm::WasmCompilationRevecHint GetRevecHint() const { return revec_hint_; }
+
 
  private:
   friend class NodeMarkerBase;
@@ -111,6 +116,7 @@ class V8_EXPORT_PRIVATE Graph final : public NON_EXPORTED_BASE(ZoneObject) {
   NodeId next_node_id_;
   ZoneVector<GraphDecorator*> decorators_;
   bool has_simd_;
+  wasm::WasmCompilationRevecHint revec_hint_;
 };
 
 
