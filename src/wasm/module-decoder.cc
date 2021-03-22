@@ -36,6 +36,7 @@ constexpr char kSourceMappingURLString[] = "sourceMappingURL";
 constexpr char kCompilationHintsString[] = "compilationHints";
 constexpr char kDebugInfoString[] = ".debug_info";
 constexpr char kExternalDebugInfoString[] = "external_debug_info";
+constexpr char kVectorWidthHintsString[] = "vectorWidthHints";
 
 const char* ExternalKindName(ImportExportKindCode kind) {
   switch (kind) {
@@ -95,6 +96,8 @@ const char* SectionName(SectionCode code) {
       return kExternalDebugInfoString;
     case kCompilationHintsSectionCode:
       return kCompilationHintsString;
+    case kVectorWidthHintsSectionCode:
+      return kVectorWidthHintsString;
     default:
       return "<unknown>";
   }
@@ -146,7 +149,9 @@ SectionCode IdentifyUnknownSectionInternal(Decoder* decoder) {
       {StaticCharVector(kCompilationHintsString), kCompilationHintsSectionCode},
       {StaticCharVector(kDebugInfoString), kDebugInfoSectionCode},
       {StaticCharVector(kExternalDebugInfoString),
-       kExternalDebugInfoSectionCode}};
+       kExternalDebugInfoSectionCode},
+      {StaticCharVector(kVectorWidthHintsString),
+       kVectorWidthHintsSectionCode}};
 
   auto name_vec =
       Vector<const char>::cast(VectorOf(section_name_start, string.length()));
@@ -432,6 +437,10 @@ class ModuleDecoderImpl : public Decoder {
         // first occurrence after function section and before code section are
         // ignored.
         break;
+      case kVectorWidthHintsSectionCode:
+        // vectorWidthHints is a custom section containing a simd vector width
+        // hint
+        break;
       default:
         next_ordered_section_ = section_code + 1;
         break;
@@ -497,6 +506,9 @@ class ModuleDecoderImpl : public Decoder {
           // custom section anyways.
           consume_bytes(static_cast<uint32_t>(end_ - start_), nullptr);
         }
+        break;
+      case kVectorWidthHintsSectionCode:
+        DecodeVectorWidthHintsSection();
         break;
       case kDataCountSectionCode:
         if (enabled_features_.has_bulk_memory()) {
@@ -1092,6 +1104,34 @@ class ModuleDecoderImpl : public Decoder {
       set_seen_unordered_section(kExternalDebugInfoSectionCode);
     }
     consume_bytes(static_cast<uint32_t>(end_ - start_), nullptr);
+  }
+
+  void DecodeVectorWidthHintsSection() {
+    TRACE("DecodeVectorWidthHints module+%d\n", static_cast<int>(pc_ - start_));
+    set_seen_unordered_section(kVectorWidthHintsSectionCode);
+
+    Decoder& decoder = *this;
+    // Decoder decoder(start_, pc_, end_, buffer_offset_);
+
+    uint32_t hint_count = decoder.consume_u32v("vector lenght hint count");
+    if (hint_count > module_->untagged_globals_buffer_size) {
+      TRACE("%u vector width hints found ", hint_count);
+    }
+
+    for (uint32_t i = 0; decoder.ok() && i < hint_count; i++) {
+      TRACE("Decode VectorWidhtHint global[%d] module+%d\n", i,
+            static_cast<int>(pc_ - start_));
+
+      uint32_t index = decoder.consume_u32("global index");
+      uint32_t value = decoder.consume_u32("hint value");
+
+      if (!decoder.ok()) break;
+      module_->vector_width_hints[index] = value;
+    }
+    if (decoder.failed()) {
+      TRACE("decode VectorWidthHints failed\n");
+      module_->vector_width_hints.clear();
+    }
   }
 
   void DecodeCompilationHintsSection() {

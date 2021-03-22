@@ -281,6 +281,8 @@ class InstanceBuilder {
   // Load data segments into the memory.
   void LoadDataSegments(Handle<WasmInstanceObject> instance);
 
+  void ApplyVectorWidthHints(Handle<WasmInstanceObject> instance);
+
   void WriteGlobalValue(const WasmGlobal& global, double value);
   void WriteGlobalValue(const WasmGlobal& global, int64_t num);
   void WriteGlobalValue(const WasmGlobal& global,
@@ -715,6 +717,9 @@ MaybeHandle<WasmInstanceObject> InstanceBuilder::Build() {
     if (thrower_->error()) return {};
   }
 
+  if (!module_->vector_width_hints.empty()) {
+    ApplyVectorWidthHints(instance);
+  }
   //--------------------------------------------------------------------------
   // Create a wrapper for the start function.
   //--------------------------------------------------------------------------
@@ -852,6 +857,36 @@ MaybeHandle<Object> InstanceBuilder::LookupImportAsm(
   }
 
   return result;
+}
+
+void InstanceBuilder::ApplyVectorWidthHints(
+    Handle<WasmInstanceObject> instance) {
+  TRACE("ApplyVectorWidthHints\n");
+  for (auto hint : module_->vector_width_hints) {
+    if (hint.first >= module_->globals.size()) {
+      TRACE("global index is out of bounds\n");
+      continue;
+    }
+
+    const auto& global = module_->globals[hint.first];
+    if ((global.mutability && global.imported) ||
+        global.init.kind() != WasmInitExpr::kI32Const) {
+      continue;
+    }
+
+    uint32_t init_value =
+        static_cast<uint32_t>(global.init.immediate().i32_const);
+    if (init_value + sizeof(uint32_t) - 1 >= instance->memory_size()) {
+      TRACE("memory offset is out of range\n");
+      continue;
+    }
+
+    uint32_t* dest =
+        reinterpret_cast<uint32_t*>(instance->memory_start() + init_value);
+    TRACE("set %p(global[%u]) from %u to %u\n", dest, hint.first, *dest,
+          hint.second);
+    *dest = hint.second;
+  }
 }
 
 // Load data segments into the memory.
