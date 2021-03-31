@@ -6,6 +6,7 @@
 
 #include "src/api/api.h"
 #include "src/asmjs/asm-js.h"
+#include "src/base/cpu.h"
 #include "src/base/platform/wrappers.h"
 #include "src/logging/counters.h"
 #include "src/logging/metrics.h"
@@ -288,6 +289,8 @@ class InstanceBuilder {
 
   // Load data segments into the memory.
   void LoadDataSegments(Handle<WasmInstanceObject> instance);
+
+  void ApplySimdHints(Handle<WasmInstanceObject> instance);
 
   void WriteGlobalValue(const WasmGlobal& global, double value);
   void WriteGlobalValue(const WasmGlobal& global, int64_t num);
@@ -682,6 +685,9 @@ MaybeHandle<WasmInstanceObject> InstanceBuilder::Build() {
     if (thrower_->error()) return {};
   }
 
+  if (enabled_.has_simd_hints() && module_->vector_width_global_index != -1) {
+    ApplySimdHints(instance);
+  }
   //--------------------------------------------------------------------------
   // Create a wrapper for the start function.
   //--------------------------------------------------------------------------
@@ -819,6 +825,42 @@ MaybeHandle<Object> InstanceBuilder::LookupImportAsm(
   }
 
   return result;
+}
+
+void InstanceBuilder::ApplySimdHints(Handle<WasmInstanceObject> instance) {
+  TRACE("ApplySimdHints\n");
+  int index = module_->vector_width_global_index;
+  if ((index < 0) || (static_cast<size_t>(index) >= module_->globals.size())) {
+    TRACE("vector_width_global index is out of bounds\n");
+    return;
+  }
+
+  const auto& vector_width_global = module_->globals[index];
+  if ((vector_width_global.mutability && vector_width_global.imported) ||
+      vector_width_global.init.kind() != WasmInitExpr::kI32Const) {
+    return;
+  }
+
+  uint32_t init_value =
+      static_cast<uint32_t>(vector_width_global.init.immediate().i32_const);
+  if (init_value + sizeof(uint32_t) - 1 >= instance->memory_size()) {
+    TRACE("memory offset is out of range\n");
+    return;
+  }
+
+  // TODO(jiepan): Be consistent with assembler
+  base::CPU cpu;
+  uint32_t max_vector_width = 128;
+  if (cpu.has_avx() && FLAG_enable_avx && cpu.has_osxsave()) {  //&&
+    // OSHasAVXSupport())
+    max_vector_width = 256;
+  }
+
+  uint32_t* dst =
+      reinterpret_cast<uint32_t*>(instance->memory_start() + init_value);
+  TRACE("set %p(global[%d]) from %u to %u\n", dst, index, *dst,
+        max_vector_width);
+  *dst = max_vector_width;
 }
 
 // Load data segments into the memory.

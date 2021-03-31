@@ -36,6 +36,7 @@ constexpr char kSourceMappingURLString[] = "sourceMappingURL";
 constexpr char kCompilationHintsString[] = "compilationHints";
 constexpr char kDebugInfoString[] = ".debug_info";
 constexpr char kExternalDebugInfoString[] = "external_debug_info";
+constexpr char kSimdHintsString[] = "simdHints";
 
 const char* ExternalKindName(ImportExportKindCode kind) {
   switch (kind) {
@@ -95,6 +96,8 @@ const char* SectionName(SectionCode code) {
       return kExternalDebugInfoString;
     case kCompilationHintsSectionCode:
       return kCompilationHintsString;
+    case kSimdHintsSectionCode:
+      return kSimdHintsString;
     default:
       return "<unknown>";
   }
@@ -146,7 +149,8 @@ SectionCode IdentifyUnknownSectionInternal(Decoder* decoder) {
       {StaticCharVector(kCompilationHintsString), kCompilationHintsSectionCode},
       {StaticCharVector(kDebugInfoString), kDebugInfoSectionCode},
       {StaticCharVector(kExternalDebugInfoString),
-       kExternalDebugInfoSectionCode}};
+       kExternalDebugInfoSectionCode},
+      {StaticCharVector(kSimdHintsString), kSimdHintsSectionCode}};
 
   auto name_vec =
       Vector<const char>::cast(VectorOf(section_name_start, string.length()));
@@ -432,6 +436,9 @@ class ModuleDecoderImpl : public Decoder {
         // first occurrence after function section and before code section are
         // ignored.
         break;
+      case kSimdHintsSectionCode:
+        // SimdHints is a custom section containing a simd vector width hint
+        break;
       default:
         next_ordered_section_ = section_code + 1;
         break;
@@ -492,6 +499,15 @@ class ModuleDecoderImpl : public Decoder {
       case kCompilationHintsSectionCode:
         if (enabled_features_.has_compilation_hints()) {
           DecodeCompilationHintsSection();
+        } else {
+          // Ignore this section when feature was disabled. It is an optional
+          // custom section anyways.
+          consume_bytes(static_cast<uint32_t>(end_ - start_), nullptr);
+        }
+        break;
+      case kSimdHintsSectionCode:
+        if (enabled_features_.has_simd_hints()) {
+          DecodeSimdHintsSection();
         } else {
           // Ignore this section when feature was disabled. It is an optional
           // custom section anyways.
@@ -1093,6 +1109,20 @@ class ModuleDecoderImpl : public Decoder {
       set_seen_unordered_section(kExternalDebugInfoSectionCode);
     }
     consume_bytes(static_cast<uint32_t>(end_ - start_), nullptr);
+  }
+
+  void DecodeSimdHintsSection() {
+    TRACE("DecodeSimdHints module+%d\n", static_cast<int>(pc_ - start_));
+    set_seen_unordered_section(kSimdHintsSectionCode);
+
+    Decoder& decoder = *this;
+    // SIMD hints contain an index of global variable(four bytes), the
+    // variable can be used to control the simd registers width
+    int32_t index = static_cast<int32_t>(decoder.consume_u32("global index"));
+
+    if (decoder.ok()) {
+      module_->vector_width_global_index = index;
+    }
   }
 
   void DecodeCompilationHintsSection() {
