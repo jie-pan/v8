@@ -18,6 +18,8 @@
   /* V8 side owner: clemensb */                                                \
   V(compilation_hints, "compilation hints section", false)                     \
                                                                                \
+  V(simd_hints, "simd hints section", false)                                   \
+                                                                               \
   /* GC proposal (early prototype, might change dramatically) */               \
   /* Official proposal: https://github.com/WebAssembly/gc */                   \
   /* Prototype engineering spec: https://bit.ly/3cWcm6Q */                     \

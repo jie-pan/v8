@@ -345,6 +345,8 @@ struct V8_EXPORT_PRIVATE WasmModule {
   // from asm.js.
   std::unique_ptr<AsmJsOffsetInformation> asm_js_offset_information;
 
+  int vector_width_global_index = -1;
+
   explicit WasmModule(std::unique_ptr<Zone> signature_zone = nullptr);
   WasmModule(const WasmModule&) = delete;
   WasmModule& operator=(const WasmModule&) = delete;
