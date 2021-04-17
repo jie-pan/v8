@@ -952,6 +952,13 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vinstr(byte op, XMMRegister dst, XMMRegister src1, Operand src2,
               SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
 
+  void vinstr256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
+                 SIMDPrefix pp, LeadingOpcode m, VexW w,
+                 CpuFeature feature = AVX);
+  void vinstr256(byte op, XMMRegister dst, XMMRegister src1, Operand src2,
+                 SIMDPrefix pp, LeadingOpcode m, VexW w,
+                 CpuFeature feature = AVX);
+
   // SSE instructions
   void sse_instr(XMMRegister dst, XMMRegister src, byte escape, byte opcode);
   void sse_instr(XMMRegister dst, Operand src, byte escape, byte opcode);
@@ -1001,12 +1008,19 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   SSE2_INSTRUCTION_LIST_SHIFT_IMM(DECLARE_SSE2_SHIFT_IMM)
 #undef DECLARE_SSE2_SHIFT_IMM
 
-#define DECLARE_SSE2_AVX_INSTRUCTION(instruction, prefix, escape, opcode)    \
-  void v##instruction(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
-    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);          \
-  }                                                                          \
-  void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {     \
-    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);          \
+#define DECLARE_SSE2_AVX_INSTRUCTION(instruction, prefix, escape, opcode)     \
+  void v##instruction(XMMRegister dst, XMMRegister src1, XMMRegister src2) {  \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);           \
+  }                                                                           \
+  void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {      \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);           \
+  }                                                                           \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1,                 \
+                           XMMRegister src2) {                                \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);        \
+  }                                                                           \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, Operand src2) { \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);        \
   }
 
   SSE2_INSTRUCTION_LIST(DECLARE_SSE2_AVX_INSTRUCTION)
@@ -1113,6 +1127,15 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                           \
   void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {      \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0); \
+  }                                                                           \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1,                 \
+                           XMMRegister src2) {                                \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2,    \
+              kW0);                                                           \
+  }                                                                           \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, Operand src2) { \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2,    \
+              kW0);                                                           \
   }
 
   SSSE3_INSTRUCTION_LIST(DECLARE_SSE34_AVX_INSTRUCTION)
@@ -1305,6 +1328,8 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vmovshdup(XMMRegister dst, XMMRegister src);
   void vbroadcastss(XMMRegister dst, Operand src);
   void vbroadcastss(XMMRegister dst, XMMRegister src);
+  void vbroadcastss256(XMMRegister dst, Operand src);
+  void vbroadcastss256(XMMRegister dst, XMMRegister src);
 
   void fma_instr(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
                  VectorLength l, SIMDPrefix pp, LeadingOpcode m, VexW w);
@@ -1337,9 +1362,15 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vmovsd(Operand dst, XMMRegister src) { vsd(0x11, src, xmm0, dst); }
   void vmovdqa(XMMRegister dst, Operand src);
   void vmovdqa(XMMRegister dst, XMMRegister src);
+  void vmovdqa256(XMMRegister dst, Operand src);
+  void vmovdqa256(XMMRegister dst, XMMRegister src);
   void vmovdqu(XMMRegister dst, Operand src);
   void vmovdqu(Operand dst, XMMRegister src);
   void vmovdqu(XMMRegister dst, XMMRegister src);
+
+  void vmovdqu256(XMMRegister dst, Operand src);
+  void vmovdqu256(Operand dst, XMMRegister src);
+  void vmovdqu256(XMMRegister dst, XMMRegister src);
 
   void vmovlps(XMMRegister dst, XMMRegister src1, Operand src2);
   void vmovlps(Operand dst, XMMRegister src);
@@ -1357,13 +1388,20 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   SSE_UNOP_INSTRUCTION_LIST(AVX_SSE_UNOP)
 #undef AVX_SSE_UNOP
 
-#define AVX_SSE_BINOP(instr, escape, opcode)                           \
-  void v##instr(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
-    vps(0x##opcode, dst, src1, src2);                                  \
-  }                                                                    \
-  void v##instr(XMMRegister dst, XMMRegister src1, Operand src2) {     \
-    vps(0x##opcode, dst, src1, src2);                                  \
+#define AVX_SSE_BINOP(instr, escape, opcode)                                \
+  void v##instr(XMMRegister dst, XMMRegister src1, XMMRegister src2) {      \
+    vps(0x##opcode, dst, src1, src2);                                       \
+  }                                                                         \
+  void v##instr(XMMRegister dst, XMMRegister src1, Operand src2) {          \
+    vps(0x##opcode, dst, src1, src2);                                       \
+  }                                                                         \
+  void v##instr##256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vps256(0x##opcode, dst, src1, src2);                                    \
+  }                                                                         \
+  void v##instr##256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vps256(0x##opcode, dst, src1, src2);                                    \
   }
+
   SSE_BINOP_INSTRUCTION_LIST(AVX_SSE_BINOP)
 #undef AVX_SSE_BINOP
 
@@ -1377,6 +1415,16 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
 
   AVX_3(vhaddps, 0x7c, vsd)
 
+// For 256bits avx instruction
+#define AVX_P_3_256(instr, opcode)      \
+  AVX_3(instr##ps##256, opcode, vps256) \
+  AVX_3(instr##pd##256, opcode, vpd256)
+
+  // 256 bits AVX
+  // AVX_P_3_256(vadd, 0x58)
+  // AVX_P_3_256(vsub, 0x5c)
+  // AVX_P_3_256(vxor, 0x57)
+
 #define AVX_SCALAR(instr, prefix, escape, opcode)                      \
   void v##instr(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kWIG);   \
@@ -1388,6 +1436,7 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   SSE2_INSTRUCTION_LIST_SD(AVX_SCALAR)
 #undef AVX_SCALAR
 
+#undef AVX_P_3_256
 #undef AVX_3
 
 #define AVX_SSE2_SHIFT_IMM(instr, prefix, escape, opcode, extension)   \
@@ -1512,21 +1561,54 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }
   void vmovss(XMMRegister dst, Operand src) { vss(0x10, dst, xmm0, src); }
   void vmovss(Operand dst, XMMRegister src) { vss(0x11, src, xmm0, dst); }
+
+  void vmovss256(XMMRegister dst, XMMRegister src1, XMMRegister src2) {
+    vss256(0x10, dst, src1, src2);
+  }
+  void vmovss256(XMMRegister dst, Operand src) { vss256(0x10, dst, xmm0, src); }
+  void vmovss256(Operand dst, XMMRegister src) { vss256(0x11, src, xmm0, dst); }
+
   void vucomiss(XMMRegister dst, XMMRegister src);
   void vucomiss(XMMRegister dst, Operand src);
   void vss(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
   void vss(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
 
+  void vss256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
+  void vss256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+
   void vshufps(XMMRegister dst, XMMRegister src1, XMMRegister src2, byte imm8) {
     vps(0xC6, dst, src1, src2, imm8);
   }
 
+  void vshufps256(XMMRegister dst, XMMRegister src1, XMMRegister src2,
+                  byte imm8) {
+    vps256(0xC6, dst, src1, src2, imm8);
+  }
+
   void vmovaps(XMMRegister dst, XMMRegister src) { vps(0x28, dst, xmm0, src); }
   void vmovaps(XMMRegister dst, Operand src) { vps(0x28, dst, xmm0, src); }
+  void vmovaps256(XMMRegister dst, XMMRegister src) {
+    vps256(0x28, dst, xmm0, src);
+  }
+  void vmovaps256(XMMRegister dst, Operand src) {
+    vps256(0x28, dst, xmm0, src);
+  }
   void vmovups(XMMRegister dst, XMMRegister src) { vps(0x10, dst, xmm0, src); }
   void vmovups(XMMRegister dst, Operand src) { vps(0x10, dst, xmm0, src); }
   void vmovups(Operand dst, XMMRegister src) { vps(0x11, src, xmm0, dst); }
+  void vmovups256(XMMRegister dst, XMMRegister src) {
+    vps256(0x10, dst, xmm0, src);
+  }
+  void vmovups256(XMMRegister dst, Operand src) {
+    vps256(0x10, dst, xmm0, src);
+  }
+  void vmovups256(Operand dst, XMMRegister src) {
+    vps256(0x11, src, xmm0, dst);
+  }
   void vmovapd(XMMRegister dst, XMMRegister src) { vpd(0x28, dst, xmm0, src); }
+  void vmovapd256(XMMRegister dst, XMMRegister src) {
+    vpd256(0x28, dst, xmm0, src);
+  }
   void vmovupd(XMMRegister dst, Operand src) { vpd(0x10, dst, xmm0, src); }
   void vmovupd(Operand dst, XMMRegister src) { vpd(0x11, src, xmm0, dst); }
   void vmovmskps(Register dst, XMMRegister src) {
@@ -1555,6 +1637,25 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
     emit(cmp);
   }
 
+  void vcmpps256(XMMRegister dst, XMMRegister src1, XMMRegister src2,
+                 int8_t cmp) {
+    vps256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmpps256(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
+    vps256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmppd256(XMMRegister dst, XMMRegister src1, XMMRegister src2,
+                 int8_t cmp) {
+    vpd256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmppd256(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
+    vpd256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+
 #define AVX_CMP_P(instr, imm8)                                          \
   void instr##ps(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
     vcmpps(dst, src1, src2, imm8);                                      \
@@ -1578,6 +1679,29 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   AVX_CMP_P(vcmpnle, 0x6)
 
 #undef AVX_CMP_P
+
+#define AVX_CMP_P256(instr, imm8)                                          \
+  void instr##ps256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vcmpps256(dst, src1, src2, imm8);                                      \
+  }                                                                        \
+  void instr##ps256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vcmpps256(dst, src1, src2, imm8);                                      \
+  }                                                                        \
+  void instr##pd256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vcmppd256(dst, src1, src2, imm8);                                      \
+  }                                                                        \
+  void instr##pd256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vcmppd256(dst, src1, src2, imm8);                                      \
+  }
+
+  // AVX_CMP_P256(vcmpeq, 0x0)
+  AVX_CMP_P256(vcmplt, 0x1)
+  AVX_CMP_P256(vcmple, 0x2)
+  // AVX_CMP_P256(vcmpneq, 0x4)
+  // AVX_CMP_P256(vcmpnlt, 0x5)
+  // AVX_CMP_P256(vcmpnle, 0x6)
+
+#undef AVX_CMP_P256
 
   void vlddqu(XMMRegister dst, Operand src) {
     vinstr(0xF0, dst, xmm0, src, kF2, k0F, kWIG);
@@ -1684,6 +1808,14 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
            byte imm8);
   void vpd(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
   void vpd(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+
+  // 256bits
+  void vps256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
+  void vps256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+  void vps256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
+              byte imm8);
+  void vpd256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
+  void vpd256(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
 
   // AVX2 instructions
 #define AVX2_INSTRUCTION(instr, prefix, escape1, escape2, opcode)           \
