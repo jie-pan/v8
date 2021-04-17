@@ -60,6 +60,9 @@
 #include "src/wasm/wasm-objects-inl.h"
 #include "src/wasm/wasm-opcodes-inl.h"
 
+#include "src/compiler/simd256-operator.h"
+#include "src/compiler/simd-widening.h"
+
 namespace v8 {
 namespace internal {
 namespace compiler {
@@ -7849,6 +7852,29 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
       }
     }
     sig = sig_builder.Build();
+  }
+
+
+  //AVX2
+  if (builder.has_simd() && CpuFeatures::IsSupported(AVX)) {
+    bool simdsig = false;
+    for (auto ret : sig->returns()) {
+      if(ret == MachineRepresentation::kSimd128) {
+        simdsig = true;
+        break;
+      }
+    }
+    for (auto param : sig->parameters()) {
+      if(param == MachineRepresentation::kSimd128) {
+        simdsig = true;
+        break;
+      }
+    }
+
+    if(!simdsig) {
+      Simd256OperatorBuilder simd256(mcgraph->zone());
+      SimdWidening(mcgraph, &simd256, sig).LowerGraph();
+    }
   }
 
   builder.LowerInt64(sig);

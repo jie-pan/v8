@@ -2475,6 +2475,7 @@ v8_header_set("v8_internal_headers") {
     "src/compiler/select-lowering.h",
     "src/compiler/serializer-for-background-compilation.h",
     "src/compiler/serializer-hints.h",
+    "src/compiler/simd256-operator.h",
     "src/compiler/simd-scalar-lowering.h",
     "src/compiler/simplified-lowering.h",
     "src/compiler/simplified-operator-reducer.h",
@@ -3045,6 +3046,7 @@ v8_header_set("v8_internal_headers") {
       "src/asmjs/asm-parser.h",
       "src/asmjs/asm-scanner.h",
       "src/asmjs/asm-types.h",
+      "src/compiler/simd-widening.h",
       "src/compiler/int64-lowering.h",
       "src/compiler/wasm-compiler.h",
       "src/debug/debug-wasm-objects-inl.h",
@@ -3451,6 +3453,7 @@ v8_compiler_sources = [
   "src/compiler/scheduler.cc",
   "src/compiler/select-lowering.cc",
   "src/compiler/serializer-for-background-compilation.cc",
+  "src/compiler/simd256-operator.cc",
   "src/compiler/simplified-lowering.cc",
   "src/compiler/simplified-operator-reducer.cc",
   "src/compiler/simplified-operator.cc",
@@ -3468,6 +3471,7 @@ v8_compiler_sources = [
 
 if (v8_enable_webassembly) {
   v8_compiler_sources += [
+    "src/compiler/simd-widening.cc",
     "src/compiler/int64-lowering.cc",
     "src/compiler/simd-scalar-lowering.cc",
     "src/compiler/wasm-compiler.cc",
