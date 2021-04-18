@@ -1561,10 +1561,13 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
 
   void vmovaps(XMMRegister dst, XMMRegister src) { vps(0x28, dst, xmm0, src); }
   void vmovaps(XMMRegister dst, Operand src) { vps(0x28, dst, xmm0, src); }
+  void vmovaps256(XMMRegister dst, XMMRegister src) { vps256(0x28, dst, xmm0, src); }
+  void vmovaps256(XMMRegister dst, Operand src) { vps256(0x28, dst, xmm0, src); }
   void vmovups(XMMRegister dst, XMMRegister src) { vps(0x10, dst, xmm0, src); }
   void vmovups(XMMRegister dst, Operand src) { vps(0x10, dst, xmm0, src); }
   void vmovups(Operand dst, XMMRegister src) { vps(0x11, src, xmm0, dst); }
   void vmovapd(XMMRegister dst, XMMRegister src) { vpd(0x28, dst, xmm0, src); }
+  void vmovapd256(XMMRegister dst, XMMRegister src) { vpd256(0x28, dst, xmm0, src); }
   void vmovupd(XMMRegister dst, Operand src) { vpd(0x10, dst, xmm0, src); }
   void vmovupd(Operand dst, XMMRegister src) { vpd(0x11, src, xmm0, dst); }
   void vmovmskps(Register dst, XMMRegister src) {
