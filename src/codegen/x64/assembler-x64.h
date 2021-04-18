@@ -952,6 +952,11 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void vinstr(byte op, XMMRegister dst, XMMRegister src1, Operand src2,
               SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
 
+  void vinstr256(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
+              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
+  void vinstr256(byte op, XMMRegister dst, XMMRegister src1, Operand src2,
+              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
+
   // SSE instructions
   void sse_instr(XMMRegister dst, XMMRegister src, byte escape, byte opcode);
   void sse_instr(XMMRegister dst, Operand src, byte escape, byte opcode);
@@ -1007,6 +1012,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                          \
   void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {     \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);          \
+  }                                                                          \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);            \
+  }                                                                               \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);            \
   }
 
   SSE2_INSTRUCTION_LIST(DECLARE_SSE2_AVX_INSTRUCTION)
@@ -1113,6 +1124,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                           \
   void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {      \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0); \
+  }                                                                           \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0);  \
+  }                                                                               \
+  void v##instruction##256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vinstr256(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0);  \
   }
 
   SSSE3_INSTRUCTION_LIST(DECLARE_SSE34_AVX_INSTRUCTION)
