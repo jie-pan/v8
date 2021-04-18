@@ -1619,6 +1619,23 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
     emit(cmp);
   }
 
+  void vcmpps256(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp) {
+    vps256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmpps256(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
+    vps256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmppd256(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp) {
+    vpd256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+  void vcmppd256(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
+    vpd256(0xC2, dst, src1, src2);
+    emit(cmp);
+  }
+
 #define AVX_CMP_P(instr, imm8)                                          \
   void instr##ps(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
     vcmpps(dst, src1, src2, imm8);                                      \
@@ -1642,6 +1659,29 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   AVX_CMP_P(vcmpnle, 0x6)
 
 #undef AVX_CMP_P
+
+#define AVX_CMP_P256(instr, imm8)                                          \
+  void instr##ps256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vcmpps256(dst, src1, src2, imm8);                                      \
+  }                                                                     \
+  void instr##ps256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vcmpps256(dst, src1, src2, imm8);                                      \
+  }                                                                     \
+  void instr##pd256(XMMRegister dst, XMMRegister src1, XMMRegister src2) { \
+    vcmppd256(dst, src1, src2, imm8);                                      \
+  }                                                                     \
+  void instr##pd256(XMMRegister dst, XMMRegister src1, Operand src2) {     \
+    vcmppd256(dst, src1, src2, imm8);                                      \
+  }
+
+  //AVX_CMP_P256(vcmpeq, 0x0)
+  AVX_CMP_P256(vcmplt, 0x1)
+  AVX_CMP_P256(vcmple, 0x2)
+  //AVX_CMP_P256(vcmpneq, 0x4)
+  //AVX_CMP_P256(vcmpnlt, 0x5)
+  //AVX_CMP_P256(vcmpnle, 0x6)
+
+#undef AVX_CMP_P256
 
   void vlddqu(XMMRegister dst, Operand src) {
     vinstr(0xF0, dst, xmm0, src, kF2, k0F, kWIG);
