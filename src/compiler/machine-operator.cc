@@ -74,6 +74,9 @@ std::ostream& operator<<(std::ostream& os, LoadTransformation rep) {
       return os << "kS128Load32Zero";
     case LoadTransformation::kS128Load64Zero:
       return os << "kS128Load64Zero";
+    //Simd256
+    case LoadTransformation::kS256Load32Splat:
+      return os << "kS256Load32Splat";
   }
   UNREACHABLE();
 }
@@ -644,7 +647,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(S128Load32x2S)             \
   V(S128Load32x2U)             \
   V(S128Load32Zero)            \
-  V(S128Load64Zero)
+  V(S128Load64Zero)            \
+  V(S256Load32Splat)
 
 #define ATOMIC_U32_TYPE_LIST(V) \
   V(Uint8)                      \

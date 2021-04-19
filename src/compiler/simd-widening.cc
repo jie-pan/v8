@@ -50,9 +50,47 @@ void SimdWidening::LowerGraph() {
   }
 }
 
+void SimdWidening::LowerLoadTransformNode(Node* node) {
+  const Operator* op;
+  LoadTransformation transform;
+
+  LoadTransformParameters params = LoadTransformParametersOf(node->op());
+
+  switch (params.transformation) {
+    case LoadTransformation::kS128Load8Splat:
+      //replacements_[node->id()].type = SimdType::kInt8x16;
+      break;
+    case LoadTransformation::kS128Load16Splat:
+    case LoadTransformation::kS128Load8x8S:
+    case LoadTransformation::kS128Load8x8U:
+      //replacements_[node->id()].type = SimdType::kInt16x8;
+      break;
+    case LoadTransformation::kS128Load32Splat:
+      transform =  LoadTransformation::kS256Load32Splat;
+      op = machine()->LoadTransform(params.kind, transform);
+      NodeProperties::ChangeOp(node, op);
+      break;
+    case LoadTransformation::kS128Load16x4S:
+    case LoadTransformation::kS128Load16x4U:
+    case LoadTransformation::kS128Load32Zero:
+      //replacements_[node->id()].type = SimdType::kInt32x4;
+      break;
+  case LoadTransformation::kS128Load64Splat:
+  case LoadTransformation::kS128Load32x2S:
+  case LoadTransformation::kS128Load32x2U:
+  case LoadTransformation::kS128Load64Zero:
+      //replacements_[node->id()].type = SimdType::kInt64x2;
+      break;
+  default:
+    break;
+  }
+
+}
+
 void SimdWidening::LowerNode(Node* node) {
   //if
   const Operator* op;
+
   switch (node->opcode()) {
     case IrOpcode::kF32x4Add: 
       //DCHECK_EQ(2, node->InputCount());
@@ -85,35 +123,10 @@ void SimdWidening::LowerNode(Node* node) {
       NodeProperties::ChangeOp(node, op);
       break;
 
-      //TODO: jiepan, replace loadtransfrom parameter
-    case IrOpcode::kLoadTransform: {
-      LoadTransformParameters params = LoadTransformParametersOf(node->op());
-      switch (params.transformation) {
-        case LoadTransformation::kS128Load8Splat:
-          //replacements_[node->id()].type = SimdType::kInt8x16;
-          break;
-        case LoadTransformation::kS128Load16Splat:
-        case LoadTransformation::kS128Load8x8S:
-        case LoadTransformation::kS128Load8x8U:
-          //replacements_[node->id()].type = SimdType::kInt16x8;
-          break;
-        case LoadTransformation::kS128Load32Splat:
-        case LoadTransformation::kS128Load16x4S:
-        case LoadTransformation::kS128Load16x4U:
-        case LoadTransformation::kS128Load32Zero:
-          //replacements_[node->id()].type = SimdType::kInt32x4;
-          break;
-        case LoadTransformation::kS128Load64Splat:
-        case LoadTransformation::kS128Load32x2S:
-        case LoadTransformation::kS128Load32x2U:
-        case LoadTransformation::kS128Load64Zero:
-          //replacements_[node->id()].type = SimdType::kInt64x2;
-          break;
-        default:
-          UNIMPLEMENTED();
-      }
-      break;
-    }
+
+    case IrOpcode::kLoadTransform:
+     LowerLoadTransformNode(node);
+     break;
 
     default:
       break;

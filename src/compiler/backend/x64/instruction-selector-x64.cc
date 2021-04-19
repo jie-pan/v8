@@ -435,6 +435,10 @@ void InstructionSelector::VisitLoadTransform(Node* node) {
     case LoadTransformation::kS128Load64Zero:
       opcode = kX64Movsd;
       break;
+    // Simd256
+    case LoadTransformation::kS256Load32Splat:
+      opcode = kX64S256Load32Splat;
+      break;
     default:
       UNREACHABLE();
   }

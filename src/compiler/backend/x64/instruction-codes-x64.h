@@ -427,7 +427,8 @@ namespace compiler {
   V(X64F32x8Eq)                           \
   V(X64F32x8Ne)                           \
   V(X64F32x8Lt)                           \
-  V(X64F32x8Le)
+  V(X64F32x8Le)                           \
+  V(X64S256Load32Splat)
 
 // Addressing modes represent the "shape" of inputs to an instruction.
 // Many instructions support multiple addressing modes. Addressing modes
