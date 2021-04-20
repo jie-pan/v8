@@ -2914,11 +2914,12 @@ VISIT_ATOMIC_BINOP(Xor)
   V(F32x8Add)                      \
   V(F32x8Sub)                      \
   V(F32x8Mul)                      \
-  V(F32x8Div)                      \
   V(F32x8Eq)                       \
   V(F32x8Ne)                       \
   V(F32x8Lt)                       \
   V(F32x8Le)
+//TODO temp rm
+  //V(F32x8Div)                      \
 
 #define SIMD_BINOP_LIST(V) \
   V(F64x2Min)              \
@@ -3183,6 +3184,14 @@ void InstructionSelector::VisitS128Select(Node* node) {
   InstructionOperand dst =
       IsSupported(AVX) ? g.DefineAsRegister(node) : g.DefineSameAsFirst(node);
   Emit(kX64S128Select, dst, g.UseRegister(node->InputAt(0)),
+       g.UseRegister(node->InputAt(1)), g.UseRegister(node->InputAt(2)));
+}
+
+void InstructionSelector::VisitS256Select(Node* node) {
+  X64OperandGenerator g(this);
+  InstructionOperand dst =
+      IsSupported(AVX) ? g.DefineAsRegister(node) : g.DefineSameAsFirst(node);
+  Emit(kX64S256Select, dst, g.UseRegister(node->InputAt(0)),
        g.UseRegister(node->InputAt(1)), g.UseRegister(node->InputAt(2)));
 }
 

@@ -300,6 +300,9 @@ class V8_EXPORT_PRIVATE SharedTurboAssembler : public TurboAssemblerBase {
   // Requires dst == mask when AVX is not supported.
   void S128Select(XMMRegister dst, XMMRegister mask, XMMRegister src1,
                   XMMRegister src2, XMMRegister scratch);
+
+  void S256Select(XMMRegister dst, XMMRegister mask, XMMRegister src1,
+                  XMMRegister src2, XMMRegister scratch);
 };
 }  // namespace internal
 }  // namespace v8

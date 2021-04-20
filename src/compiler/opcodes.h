@@ -1019,7 +1019,8 @@
   V(F32x8Floor)                 \
   V(F32x8Trunc)                 \
   V(F32x8NearestInt)            \
-  V(F32x8DemoteF64x2Zero)
+  V(F32x8DemoteF64x2Zero)       \
+  V(S256Select)
 
 #define VALUE_OP_LIST(V)  \
   COMMON_OP_LIST(V)       \

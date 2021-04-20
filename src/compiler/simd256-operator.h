@@ -63,6 +63,8 @@ class V8_EXPORT_PRIVATE Simd256OperatorBuilder final
   const Operator* F32x8DemoteF64x2Zero();
 
 
+  const Operator* S256Select();
+
  private:
   Zone* zone() const { return zone_; }
 

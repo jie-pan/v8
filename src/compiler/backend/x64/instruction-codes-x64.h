@@ -421,14 +421,17 @@ namespace compiler {
   V(X64F32x8Add)                          \
   V(X64F32x8Sub)                          \
   V(X64F32x8Mul)                          \
-  V(X64F32x8Div)                          \
   V(X64F32x8Min)                          \
   V(X64F32x8Max)                          \
   V(X64F32x8Eq)                           \
   V(X64F32x8Ne)                           \
   V(X64F32x8Lt)                           \
   V(X64F32x8Le)                           \
-  V(X64S256Load32Splat)
+  V(X64S256Load32Splat)                   \
+  V(X64S256Select)
+
+//TODO opcode count < (1<<9), 9bits bit field
+ // V(X64F32x8Div)                          \
 
 // Addressing modes represent the "shape" of inputs to an instruction.
 // Many instructions support multiple addressing modes. Addressing modes

@@ -2399,8 +2399,10 @@ void InstructionSelector::VisitNode(Node* node) {
       return MarkAsSimd128(node), VisitF32x8Sub(node);
     case IrOpcode::kF32x8Mul:
       return MarkAsSimd128(node), VisitF32x8Mul(node);
+      /*
     case IrOpcode::kF32x8Div:
       return MarkAsSimd128(node), VisitF32x8Div(node);
+      */
     case IrOpcode::kF32x8Min:
       return MarkAsSimd128(node), VisitF32x8Min(node);
     case IrOpcode::kF32x8Max:
@@ -2413,6 +2415,8 @@ void InstructionSelector::VisitNode(Node* node) {
       return MarkAsSimd128(node), VisitF32x8Lt(node);
     case IrOpcode::kF32x8Le:
       return MarkAsSimd128(node), VisitF32x8Le(node);
+    case IrOpcode::kS256Select:
+      return MarkAsSimd128(node), VisitS256Select(node);
 
     default:
       FATAL("Unexpected operator #%d:%s @ node #%d", node->opcode(),

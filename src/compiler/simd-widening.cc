@@ -123,6 +123,10 @@ void SimdWidening::LowerNode(Node* node) {
       NodeProperties::ChangeOp(node, op);
       break;
 
+    case IrOpcode::kS128Select:
+      op = simd256_->S256Select();
+      NodeProperties::ChangeOp(node, op);
+      break;
 
     case IrOpcode::kLoadTransform:
      LowerLoadTransformNode(node);

@@ -399,5 +399,18 @@ void SharedTurboAssembler::S128Select(XMMRegister dst, XMMRegister mask,
   }
 }
 
+void SharedTurboAssembler::S256Select(XMMRegister dst, XMMRegister mask,
+                                      XMMRegister src1, XMMRegister src2,
+                                      XMMRegister scratch) {
+  // v128.select = v128.or(v128.and(v1, c), v128.andnot(v2, c)).
+  // pandn(x, y) = !x & y, so we have to flip the mask and input.
+  if (CpuFeatures::IsSupported(AVX)) {
+    CpuFeatureScope avx_scope(this, AVX);
+    vpandn256(scratch, mask, src2);
+    vpand256(dst, src1, mask);
+    vpor256(dst, dst, scratch);
+  }
+}
+
 }  // namespace internal
 }  // namespace v8
