@@ -52,6 +52,7 @@ class V8_EXPORT_PRIVATE SimdWidening {
   CommonOperatorBuilder* common() const { return mcgraph_->common(); }
 
   void LowerNode(Node* node);
+  void LowerLoadNode(Node* node);
   void LowerLoadTransformNode(Node* node);
 
   MachineGraph* const mcgraph_;

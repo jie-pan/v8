@@ -297,6 +297,10 @@ ArchOpcode GetLoadOpcode(LoadRepresentation load_rep) {
     case MachineRepresentation::kSimd128:  // Fall through.
       opcode = kX64Movdqu;
       break;
+    case MachineRepresentation::kSimd256:
+      opcode = kX64Movdqu256;
+      break;
+
     case MachineRepresentation::kNone:
     case MachineRepresentation::kMapWord:
       UNREACHABLE();

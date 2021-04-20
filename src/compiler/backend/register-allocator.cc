@@ -32,6 +32,8 @@ static constexpr int kFloat32Bit =
     RepresentationBit(MachineRepresentation::kFloat32);
 static constexpr int kSimd128Bit =
     RepresentationBit(MachineRepresentation::kSimd128);
+static constexpr int kSimd256Bit =
+    RepresentationBit(MachineRepresentation::kSimd256);
 
 
 const InstructionBlock* GetContainingLoop(const InstructionSequence* sequence,
@@ -1491,6 +1493,7 @@ void TopTierRegisterAllocationData::MarkFixedUse(MachineRepresentation rep,
   switch (rep) {
     case MachineRepresentation::kFloat32:
     case MachineRepresentation::kSimd128:
+    case MachineRepresentation::kSimd256:
       if (kSimpleFPAliasing) {
         fixed_fp_register_use_->Add(index);
       } else {
@@ -1519,6 +1522,7 @@ bool TopTierRegisterAllocationData::HasFixedUse(MachineRepresentation rep,
   switch (rep) {
     case MachineRepresentation::kFloat32:
     case MachineRepresentation::kSimd128:
+    case MachineRepresentation::kSimd256:
       if (kSimpleFPAliasing) {
         return fixed_fp_register_use_->Contains(index);
       } else {
@@ -1549,6 +1553,7 @@ void TopTierRegisterAllocationData::MarkAllocated(MachineRepresentation rep,
   switch (rep) {
     case MachineRepresentation::kFloat32:
     case MachineRepresentation::kSimd128:
+    case MachineRepresentation::kSimd256:
       if (kSimpleFPAliasing) {
         assigned_double_registers_->Add(index);
       } else {
@@ -1909,6 +1914,7 @@ int LiveRangeBuilder::FixedFPLiveRangeID(int index, MachineRepresentation rep) {
   int result = -index - 1;
   switch (rep) {
     case MachineRepresentation::kSimd128:
+    case MachineRepresentation::kSimd256:
       result -=
           kNumberOfFixedRangesPerRegister * config()->num_float_registers();
       V8_FALLTHROUGH;
@@ -1959,6 +1965,7 @@ TopLevelLiveRange* LiveRangeBuilder::FixedFPLiveRangeFor(
         live_ranges = &data()->fixed_float_live_ranges();
         break;
       case MachineRepresentation::kSimd128:
+      case MachineRepresentation::kSimd256:
         num_regs = config()->num_simd128_registers();
         live_ranges = &data()->fixed_simd128_live_ranges();
         break;
@@ -2726,7 +2733,7 @@ RegisterAllocator::RegisterAllocator(TopTierRegisterAllocationData* data,
       check_fp_aliasing_(false) {
   if (!kSimpleFPAliasing && kind == RegisterKind::kDouble) {
     check_fp_aliasing_ = (data->code()->representation_mask() &
-                          (kFloat32Bit | kSimd128Bit)) != 0;
+                          (kFloat32Bit | kSimd128Bit | kSimd256Bit)) != 0;
   }
 }
 
@@ -3314,7 +3321,8 @@ void LinearScanAllocator::ComputeStateFromManyPredecessors(
         const int* codes = allocatable_register_codes();
         MachineRepresentation rep = val.first->representation();
         if (check_aliasing && (rep == MachineRepresentation::kFloat32 ||
-                               rep == MachineRepresentation::kSimd128))
+                               rep == MachineRepresentation::kSimd128 ||
+                               rep == MachineRepresentation::kSimd256))
           GetFPRegisterSet(rep, &num_regs, &num_codes, &codes);
         for (int idx = 0; idx < num_regs; idx++) {
           int uses = val.second.used_registers[idx];
@@ -3906,7 +3914,8 @@ void LinearScanAllocator::GetFPRegisterSet(MachineRepresentation rep,
     *num_regs = data()->config()->num_float_registers();
     *num_codes = data()->config()->num_allocatable_float_registers();
     *codes = data()->config()->allocatable_float_codes();
-  } else if (rep == MachineRepresentation::kSimd128) {
+  } else if (rep == MachineRepresentation::kSimd128 ||
+             rep == MachineRepresentation::kSimd256) {
     *num_regs = data()->config()->num_simd128_registers();
     *num_codes = data()->config()->num_allocatable_simd128_registers();
     *codes = data()->config()->allocatable_simd128_codes();
@@ -4038,7 +4047,8 @@ int LinearScanAllocator::PickRegisterThatIsAvailableLongest(
   const int* codes = allocatable_register_codes();
   MachineRepresentation rep = current->representation();
   if (!kSimpleFPAliasing && (rep == MachineRepresentation::kFloat32 ||
-                             rep == MachineRepresentation::kSimd128)) {
+                             rep == MachineRepresentation::kSimd128 ||
+                             rep == MachineRepresentation::kSimd256)) {
     GetFPRegisterSet(rep, &num_regs, &num_codes, &codes);
   }
 

@@ -618,7 +618,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(MapInHeader)             \
   V(AnyTagged)               \
   V(CompressedPointer)       \
-  V(AnyCompressed)
+  V(AnyCompressed)           \
+  V(Simd256)
 
 #define MACHINE_REPRESENTATION_LIST(V) \
   V(kFloat32)                          \

@@ -4,6 +4,14 @@ namespace v8 {
 namespace internal {
 namespace compiler {
 
+#define TRACE(...)                                       \
+  do {                                                   \
+    if (1) {                                             \
+        PrintF("simdwidening:");                         \
+        PrintF(__VA_ARGS__);                             \
+    }                                                    \
+  } while (false)
+
 SimdWidening::SimdWidening(
     MachineGraph* mcgraph, Simd256OperatorBuilder* simd256,
     Signature<MachineRepresentation>* signature)
@@ -49,6 +57,41 @@ void SimdWidening::LowerGraph() {
     }
   }
 }
+
+void SimdWidening::LowerLoadNode(Node* node) {
+  MachineRepresentation rep = LoadRepresentationOf(node->op()).representation();
+  if (rep != MachineRepresentation::kSimd128) {
+    return;
+  }
+  constexpr MachineType type = MachineType::Simd256();
+  const Operator* op = nullptr;
+  switch (node->opcode()) {
+    case IrOpcode::kLoad: {
+      op = machine()->Load(type);
+      break;
+    }
+    case IrOpcode::kProtectedLoad: {
+      op = machine()->ProtectedLoad(type);
+      break;
+    }
+
+    case IrOpcode::kUnalignedLoad: {
+      op = machine()->UnalignedLoad(type);
+      break;
+    }
+    case IrOpcode::kLoadImmutable: {
+      op = machine()->LoadImmutable(type);
+      break;
+    }
+    default:
+      break;
+  }
+  if(op != nullptr) {
+    TRACE("#%d:%s\n", node->id(),node->op()->mnemonic());
+    NodeProperties::ChangeOp(node, op);
+  }
+}
+
 
 void SimdWidening::LowerLoadTransformNode(Node* node) {
   const Operator* op;
@@ -126,6 +169,13 @@ void SimdWidening::LowerNode(Node* node) {
     case IrOpcode::kS128Select:
       op = simd256_->S256Select();
       NodeProperties::ChangeOp(node, op);
+      break;
+
+    case IrOpcode::kLoad:
+    case IrOpcode::kProtectedLoad:
+    case IrOpcode::kUnalignedLoad:
+    case IrOpcode::kLoadImmutable:
+      LowerLoadNode(node);
       break;
 
     case IrOpcode::kLoadTransform:

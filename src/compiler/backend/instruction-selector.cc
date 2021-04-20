@@ -1965,7 +1965,13 @@ void InstructionSelector::VisitNode(Node* node) {
 #undef ATOMIC_CASE
     case IrOpcode::kProtectedLoad: {
       LoadRepresentation type = LoadRepresentationOf(node->op());
-      MarkAsRepresentation(type.representation(), node);
+      //TODO
+      if(type.representation() == MachineRepresentation::kSimd256) {
+        MarkAsRepresentation(MachineRepresentation::kSimd128, node);
+      } else {
+        MarkAsRepresentation(type.representation(), node);
+      }
+
       return VisitProtectedLoad(node);
     }
     case IrOpcode::kSignExtendWord8ToInt32:

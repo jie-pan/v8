@@ -428,7 +428,8 @@ namespace compiler {
   V(X64F32x8Lt)                           \
   V(X64F32x8Le)                           \
   V(X64S256Load32Splat)                   \
-  V(X64S256Select)
+  V(X64S256Select)                        \
+  V(X64Movdqu256)
 
 //TODO opcode count < (1<<9), 9bits bit field
  // V(X64F32x8Div)                          \

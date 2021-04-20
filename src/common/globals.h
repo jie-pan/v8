@@ -369,6 +369,7 @@ constexpr int kUC16Size = sizeof(uc16);  // NOLINT
 
 // 128 bit SIMD value size.
 constexpr int kSimd128Size = 16;
+constexpr int kSimd256Size = 32;
 
 // Maximum ordinal used for tracking asynchronous module evaluation order.
 constexpr unsigned kMaxModuleAsyncEvaluatingOrdinal = (1 << 30) - 1;
