@@ -92,6 +92,50 @@ void SimdWidening::LowerLoadNode(Node* node) {
   }
 }
 
+void SimdWidening::LowerStoreNode(Node* node) {
+  DCHECK_LT(2, node->InputCount());
+
+  const Operator* store_op = nullptr;
+  MachineRepresentation rep;
+  switch (node->opcode()) {
+    case IrOpcode::kStore: {
+      rep = StoreRepresentationOf(node->op()).representation();
+      if(rep == MachineRepresentation::kSimd128) {
+        rep = MachineRepresentation::kSimd256;
+      }
+      WriteBarrierKind write_barrier_kind =
+          StoreRepresentationOf(node->op()).write_barrier_kind();
+      store_op = machine()->Store(StoreRepresentation(
+          rep, write_barrier_kind));
+      break;
+    }
+    case IrOpcode::kUnalignedStore: {
+      rep = UnalignedStoreRepresentationOf(node->op());
+      if(rep == MachineRepresentation::kSimd128) {
+        rep = MachineRepresentation::kSimd256;
+      }
+
+      store_op = machine()->UnalignedStore(rep);
+      break;
+    }
+    case IrOpcode::kProtectedStore: {
+      rep = StoreRepresentationOf(node->op()).representation();
+      if(rep == MachineRepresentation::kSimd128) {
+        rep = MachineRepresentation::kSimd256;
+      }
+      store_op = machine()->ProtectedStore(rep);
+      break;
+    }
+    default:
+      break;
+  }
+  if(store_op != nullptr) {
+    TRACE("#%d:%s\n", node->id(),node->op()->mnemonic());
+    NodeProperties::ChangeOp(node, store_op);
+  }
+}
+
+
 
 void SimdWidening::LowerLoadTransformNode(Node* node) {
   const Operator* op;
@@ -178,6 +222,11 @@ void SimdWidening::LowerNode(Node* node) {
       LowerLoadNode(node);
       break;
 
+    case IrOpcode::kStore:
+    case IrOpcode::kUnalignedStore:
+    case IrOpcode::kProtectedStore:
+      LowerStoreNode(node);
+      break;
     case IrOpcode::kLoadTransform:
      LowerLoadTransformNode(node);
      break;

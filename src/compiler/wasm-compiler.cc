@@ -7855,7 +7855,7 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
   }
 
 
-  //AVX2
+  //Simd256
   if (builder.has_simd() && CpuFeatures::IsSupported(AVX)) {
     bool simdsig = false;
     for (auto ret : sig->returns()) {
@@ -7871,7 +7871,7 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
       }
     }
 
-    if(!simdsig) {
+    if(!simdsig && func_index == 113) {
       Simd256OperatorBuilder simd256(mcgraph->zone());
       SimdWidening(mcgraph, &simd256, sig).LowerGraph();
     }

@@ -634,7 +634,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(kTaggedPointer)                    \
   V(kTagged)                           \
   V(kCompressedPointer)                \
-  V(kCompressed)
+  V(kCompressed)                       \
+  V(kSimd256)
 
 #define LOAD_TRANSFORM_LIST(V) \
   V(S128Load8Splat)            \

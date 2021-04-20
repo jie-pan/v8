@@ -336,6 +336,8 @@ ArchOpcode GetStoreOpcode(StoreRepresentation store_rep) {
       return kX64Movq;
     case MachineRepresentation::kSimd128:  // Fall through.
       return kX64Movdqu;
+    case MachineRepresentation::kSimd256:
+      return kX64Movdqu256;
     case MachineRepresentation::kNone:
     case MachineRepresentation::kMapWord:
       UNREACHABLE();

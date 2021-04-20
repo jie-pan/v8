@@ -53,6 +53,7 @@ class V8_EXPORT_PRIVATE SimdWidening {
 
   void LowerNode(Node* node);
   void LowerLoadNode(Node* node);
+  void LowerStoreNode(Node* node);
   void LowerLoadTransformNode(Node* node);
 
   MachineGraph* const mcgraph_;
