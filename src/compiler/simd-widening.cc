@@ -227,9 +227,23 @@ void SimdWidening::LowerNode(Node* node) {
     case IrOpcode::kProtectedStore:
       LowerStoreNode(node);
       break;
+
     case IrOpcode::kLoadTransform:
      LowerLoadTransformNode(node);
      break;
+
+    case IrOpcode::kPhi: {
+      MachineRepresentation rep = PhiRepresentationOf(node->op());
+      if (rep == MachineRepresentation::kSimd128) {
+        rep = MachineRepresentation::kSimd256;
+        int value_in_count = node->op()->ValueInputCount();
+        op = common()->Phi(rep, value_in_count);
+
+        TRACE("#%d:%s\n", node->id(),node->op()->mnemonic());
+        NodeProperties::ChangeOp(node, op);
+      }
+      break;
+    }
 
     default:
       break;
