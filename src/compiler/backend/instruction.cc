@@ -200,7 +200,7 @@ std::ostream& operator<<(std::ostream& os, const InstructionOperand& op) {
         os << "[" << FloatRegister::from_code(allocated.register_code())
            << "|R";
       } else {
-        DCHECK(op.IsSimd128Register());
+        DCHECK(op.IsSimd128Register() || op.IsSimd256Register());
         os << "[" << Simd128Register::from_code(allocated.register_code())
            << "|R";
       }
