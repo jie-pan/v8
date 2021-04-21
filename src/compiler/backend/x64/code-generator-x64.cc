@@ -4950,7 +4950,14 @@ void CodeGenerator::AssembleMove(InstructionOperand* source,
         __ movq(g.ToRegister(destination), g.ToRegister(source));
       } else {
         DCHECK(source->IsFPRegister());
-        __ Movapd(g.ToDoubleRegister(destination), g.ToDoubleRegister(source));
+        MachineRepresentation rep =
+            LocationOperand::cast(source)->representation();
+        if (rep == MachineRepresentation::kSimd256) {
+          CpuFeatureScope avx_scope(tasm(), AVX);
+          __ vmovapd256(g.ToDoubleRegister(destination), g.ToDoubleRegister(source));
+        } else {
+          __ Movapd(g.ToDoubleRegister(destination), g.ToDoubleRegister(source));
+        }
       }
       return;
     case MoveType::kRegisterToStack: {
@@ -4962,10 +4969,13 @@ void CodeGenerator::AssembleMove(InstructionOperand* source,
         XMMRegister src = g.ToDoubleRegister(source);
         MachineRepresentation rep =
             LocationOperand::cast(source)->representation();
-        if (rep != MachineRepresentation::kSimd128) {
-          __ Movsd(dst, src);
-        } else {
+        if (rep == MachineRepresentation::kSimd128) {
           __ Movups(dst, src);
+        } else if (rep == MachineRepresentation::kSimd256) {
+          CpuFeatureScope avx_scope(tasm(), AVX);
+          __ vmovups256(dst, src);
+        } else {
+          __ Movsd(dst, src);
         }
       }
       return;
@@ -4979,10 +4989,13 @@ void CodeGenerator::AssembleMove(InstructionOperand* source,
         XMMRegister dst = g.ToDoubleRegister(destination);
         MachineRepresentation rep =
             LocationOperand::cast(source)->representation();
-        if (rep != MachineRepresentation::kSimd128) {
-          __ Movsd(dst, src);
-        } else {
+        if (rep == MachineRepresentation::kSimd128) {
           __ Movups(dst, src);
+        } else if (rep == MachineRepresentation::kSimd256) {
+          CpuFeatureScope avx_scope(tasm(), AVX);
+          __ vmovups256(dst, src);
+        } else {
+          __ Movsd(dst, src);
         }
       }
       return;
@@ -4998,13 +5011,18 @@ void CodeGenerator::AssembleMove(InstructionOperand* source,
       } else {
         MachineRepresentation rep =
             LocationOperand::cast(source)->representation();
-        if (rep != MachineRepresentation::kSimd128) {
-          __ Movsd(kScratchDoubleReg, src);
-          __ Movsd(dst, kScratchDoubleReg);
-        } else {
+        if (rep == MachineRepresentation::kSimd128) {
           DCHECK(source->IsSimd128StackSlot());
           __ Movups(kScratchDoubleReg, src);
           __ Movups(dst, kScratchDoubleReg);
+        } else if (rep == MachineRepresentation::kSimd256) {
+          DCHECK(source->IsSimd256StackSlot());
+          CpuFeatureScope avx_scope(tasm(), AVX);
+          __ vmovups256(kScratchDoubleReg, src);
+          __ vmovups256(dst, kScratchDoubleReg);
+        } else {
+          __ Movsd(kScratchDoubleReg, src);
+          __ Movsd(dst, kScratchDoubleReg);
         }
       }
       return;
