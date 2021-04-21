@@ -1684,7 +1684,8 @@ class V8_EXPORT_PRIVATE InstructionSequence final
     constexpr int kFPRepMask =
         RepresentationBit(MachineRepresentation::kFloat32) |
         RepresentationBit(MachineRepresentation::kFloat64) |
-        RepresentationBit(MachineRepresentation::kSimd128);
+        RepresentationBit(MachineRepresentation::kSimd128) |
+        RepresentationBit(MachineRepresentation::kSimd256);
     return (representation_mask() & kFPRepMask) != 0;
   }
 
