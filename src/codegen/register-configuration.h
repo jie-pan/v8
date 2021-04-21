@@ -51,6 +51,7 @@ class V8_EXPORT_PRIVATE RegisterConfiguration {
   int num_float_registers() const { return num_float_registers_; }
   int num_double_registers() const { return num_double_registers_; }
   int num_simd128_registers() const { return num_simd128_registers_; }
+  int num_simd256_registers() const { return num_simd256_registers_; }
   int num_allocatable_general_registers() const {
     return num_allocatable_general_registers_;
   }
@@ -66,6 +67,10 @@ class V8_EXPORT_PRIVATE RegisterConfiguration {
   int num_allocatable_simd128_registers() const {
     return num_allocatable_simd128_registers_;
   }
+  int num_allocatable_simd256_registers() const {
+    return num_allocatable_simd256_registers_;
+  }
+
   AliasingKind fp_aliasing_kind() const { return fp_aliasing_kind_; }
   int32_t allocatable_general_codes_mask() const {
     return allocatable_general_codes_mask_;
@@ -104,6 +109,13 @@ class V8_EXPORT_PRIVATE RegisterConfiguration {
   bool IsAllocatableSimd128Code(int index) const {
     return ((1 << index) & allocatable_simd128_codes_mask_) != 0;
   }
+  int GetAllocatableSimd256Code(int index) const {
+    DCHECK(index >= 0 && index < num_allocatable_simd256_registers());
+    return allocatable_simd256_codes_[index];
+  }
+  bool IsAllocatableSimd256Code(int index) const {
+    return ((1 << index) & allocatable_simd256_codes_mask_) != 0;
+  }
 
   const int* allocatable_general_codes() const {
     return allocatable_general_codes_;
@@ -116,6 +128,9 @@ class V8_EXPORT_PRIVATE RegisterConfiguration {
   }
   const int* allocatable_simd128_codes() const {
     return allocatable_simd128_codes_;
+  }
+  const int* allocatable_simd256_codes() const {
+    return allocatable_simd256_codes_;
   }
 
   // Aliasing calculations for floating point registers, when fp_aliasing_kind()
@@ -137,18 +152,22 @@ class V8_EXPORT_PRIVATE RegisterConfiguration {
   int num_float_registers_;
   const int num_double_registers_;
   int num_simd128_registers_;
+  int num_simd256_registers_;
   int num_allocatable_general_registers_;
   int num_allocatable_float_registers_;
   int num_allocatable_double_registers_;
   int num_allocatable_simd128_registers_;
+  int num_allocatable_simd256_registers_;
   int32_t allocatable_general_codes_mask_;
   int32_t allocatable_float_codes_mask_;
   int32_t allocatable_double_codes_mask_;
   int32_t allocatable_simd128_codes_mask_;
+  int32_t allocatable_simd256_codes_mask_;
   const int* allocatable_general_codes_;
   int allocatable_float_codes_[kMaxFPRegisters];
   const int* allocatable_double_codes_;
   int allocatable_simd128_codes_[kMaxFPRegisters];
+  int allocatable_simd256_codes_[kMaxFPRegisters];
   AliasingKind fp_aliasing_kind_;
 };
 

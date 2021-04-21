@@ -41,6 +41,8 @@ STATIC_ASSERT(RegisterConfiguration::kMaxFPRegisters >=
               DoubleRegister::kNumRegisters);
 STATIC_ASSERT(RegisterConfiguration::kMaxFPRegisters >=
               Simd128Register::kNumRegisters);
+STATIC_ASSERT(RegisterConfiguration::kMaxFPRegisters >=
+              Simd256Register::kNumRegisters);
 
 // Callers on architectures other than Arm expect this to be be constant
 // between build and runtime. Avoid adding variability on other platforms.
@@ -217,14 +219,17 @@ RegisterConfiguration::RegisterConfiguration(
       num_float_registers_(0),
       num_double_registers_(num_double_registers),
       num_simd128_registers_(0),
+      num_simd256_registers_(0),
       num_allocatable_general_registers_(num_allocatable_general_registers),
       num_allocatable_float_registers_(0),
       num_allocatable_double_registers_(num_allocatable_double_registers),
       num_allocatable_simd128_registers_(0),
+      num_allocatable_simd256_registers_(0),
       allocatable_general_codes_mask_(0),
       allocatable_float_codes_mask_(0),
       allocatable_double_codes_mask_(0),
       allocatable_simd128_codes_mask_(0),
+      allocatable_simd256_codes_mask_(0),
       allocatable_general_codes_(allocatable_general_codes),
       allocatable_double_codes_(allocatable_double_codes),
       fp_aliasing_kind_(fp_aliasing_kind) {
@@ -267,19 +272,21 @@ RegisterConfiguration::RegisterConfiguration(
     }
   } else {
     DCHECK(fp_aliasing_kind_ == OVERLAP);
-    num_float_registers_ = num_simd128_registers_ = num_double_registers_;
-    num_allocatable_float_registers_ = num_allocatable_simd128_registers_ =
+    num_float_registers_ = num_simd256_registers_ = num_simd128_registers_ = num_double_registers_;
+    num_allocatable_float_registers_ = num_allocatable_simd256_registers_ = num_allocatable_simd128_registers_ =
         num_allocatable_double_registers_;
     for (int i = 0; i < num_allocatable_float_registers_; ++i) {
-      allocatable_float_codes_[i] = allocatable_simd128_codes_[i] =
+      allocatable_float_codes_[i] = allocatable_simd256_codes_[i] = allocatable_simd128_codes_[i] =
           allocatable_double_codes_[i];
     }
-    allocatable_float_codes_mask_ = allocatable_simd128_codes_mask_ =
+    allocatable_float_codes_mask_ = allocatable_simd256_codes_mask_ = allocatable_simd128_codes_mask_ =
         allocatable_double_codes_mask_;
   }
 }
 
 // Assert that kFloat32, kFloat64, and kSimd128 are consecutive values.
+STATIC_ASSERT(static_cast<int>(MachineRepresentation::kSimd256) ==
+              static_cast<int>(MachineRepresentation::kSimd128) + 1);
 STATIC_ASSERT(static_cast<int>(MachineRepresentation::kSimd128) ==
               static_cast<int>(MachineRepresentation::kFloat64) + 1);
 STATIC_ASSERT(static_cast<int>(MachineRepresentation::kFloat64) ==

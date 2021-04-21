@@ -1309,6 +1309,7 @@ TopTierRegisterAllocationData::TopTierRegisterAllocationData(
                                     this->config()->num_double_registers(),
                                 nullptr, allocation_zone()),
       fixed_simd128_live_ranges_(allocation_zone()),
+      fixed_simd256_live_ranges_(allocation_zone()),
       spill_ranges_(code->VirtualRegisterCount(), nullptr, allocation_zone()),
       delayed_references_(allocation_zone()),
       assigned_registers_(nullptr),
@@ -1328,6 +1329,11 @@ TopTierRegisterAllocationData::TopTierRegisterAllocationData(
         kNumberOfFixedRangesPerRegister *
             this->config()->num_simd128_registers(),
         nullptr);
+    fixed_simd256_live_ranges_.resize(
+        kNumberOfFixedRangesPerRegister *
+            this->config()->num_simd256_registers(),
+        nullptr);
+
   }
 
   assigned_registers_ = code_zone()->New<BitVector>(
@@ -1913,8 +1919,11 @@ void LiveRangeBuilder::AddInitialIntervals(const InstructionBlock* block,
 int LiveRangeBuilder::FixedFPLiveRangeID(int index, MachineRepresentation rep) {
   int result = -index - 1;
   switch (rep) {
-    case MachineRepresentation::kSimd128:
     case MachineRepresentation::kSimd256:
+      result -=
+          kNumberOfFixedRangesPerRegister * config()->num_simd128_registers();
+      V8_FALLTHROUGH;
+    case MachineRepresentation::kSimd128:
       result -=
           kNumberOfFixedRangesPerRegister * config()->num_float_registers();
       V8_FALLTHROUGH;
@@ -1965,9 +1974,12 @@ TopLevelLiveRange* LiveRangeBuilder::FixedFPLiveRangeFor(
         live_ranges = &data()->fixed_float_live_ranges();
         break;
       case MachineRepresentation::kSimd128:
-      case MachineRepresentation::kSimd256:
         num_regs = config()->num_simd128_registers();
         live_ranges = &data()->fixed_simd128_live_ranges();
+        break;
+      case MachineRepresentation::kSimd256:
+        num_regs = config()->num_simd256_registers();
+        live_ranges = &data()->fixed_simd256_live_ranges();
         break;
       default:
         break;
@@ -2068,10 +2080,12 @@ void LiveRangeBuilder::ProcessInstructions(const InstructionBlock* block,
       LifetimePosition::GapFromInstructionIndex(block_start);
   bool fixed_float_live_ranges = false;
   bool fixed_simd128_live_ranges = false;
+  bool fixed_simd256_live_ranges = false;
   if (!kSimpleFPAliasing) {
     int mask = data()->code()->representation_mask();
     fixed_float_live_ranges = (mask & kFloat32Bit) != 0;
     fixed_simd128_live_ranges = (mask & kSimd128Bit) != 0;
+    fixed_simd256_live_ranges = (mask & kSimd256Bit) != 0;
   }
   SpillMode spill_mode = SpillModeForBlock(block);
 
@@ -2156,6 +2170,17 @@ void LiveRangeBuilder::ProcessInstructions(const InstructionBlock* block,
                                   allocation_zone(), data()->is_trace_alloc());
           }
         }
+        if (fixed_simd256_live_ranges) {
+          for (int i = 0; i < config()->num_allocatable_simd256_registers();
+               ++i) {
+            int code = config()->GetAllocatableSimd256Code(i);
+            TopLevelLiveRange* range = FixedFPLiveRangeFor(
+                code, MachineRepresentation::kSimd256, spill_mode);
+            range->AddUseInterval(curr_position, curr_position.End(),
+                                  allocation_zone(), data()->is_trace_alloc());
+          }
+        }
+
       }
     }
 
@@ -3471,6 +3496,13 @@ void LinearScanAllocator::UpdateDeferredFixedRanges(SpillMode spill_mode,
             }
           }
         }
+        for (TopLevelLiveRange* current : data()->fixed_simd256_live_ranges()) {
+          if (current != nullptr) {
+            if (current->IsDeferredFixed()) {
+              add_to_inactive(current);
+            }
+          }
+        }
       }
     }
   } else {
@@ -3564,6 +3596,13 @@ void LinearScanAllocator::AllocateRegisters() {
           AddToInactive(current);
         }
       }
+      for (TopLevelLiveRange* current : data()->fixed_simd256_live_ranges()) {
+        if (current != nullptr) {
+          if (current->IsDeferredFixed()) continue;
+          AddToInactive(current);
+        }
+      }
+
     }
   }
 
@@ -3914,11 +3953,14 @@ void LinearScanAllocator::GetFPRegisterSet(MachineRepresentation rep,
     *num_regs = data()->config()->num_float_registers();
     *num_codes = data()->config()->num_allocatable_float_registers();
     *codes = data()->config()->allocatable_float_codes();
-  } else if (rep == MachineRepresentation::kSimd128 ||
-             rep == MachineRepresentation::kSimd256) {
+  } else if (rep == MachineRepresentation::kSimd128) {
     *num_regs = data()->config()->num_simd128_registers();
     *num_codes = data()->config()->num_allocatable_simd128_registers();
     *codes = data()->config()->allocatable_simd128_codes();
+  } else if (rep == MachineRepresentation::kSimd256) {
+    *num_regs = data()->config()->num_simd256_registers();
+    *num_codes = data()->config()->num_allocatable_simd256_registers();
+    *codes = data()->config()->allocatable_simd256_codes();
   } else {
     UNREACHABLE();
   }
@@ -3931,7 +3973,8 @@ void LinearScanAllocator::FindFreeRegistersForRange(
   const int* codes = allocatable_register_codes();
   MachineRepresentation rep = range->representation();
   if (!kSimpleFPAliasing && (rep == MachineRepresentation::kFloat32 ||
-                             rep == MachineRepresentation::kSimd128))
+                             rep == MachineRepresentation::kSimd128 ||
+                             rep == MachineRepresentation::kSimd256))
     GetFPRegisterSet(rep, &num_regs, &num_codes, &codes);
   DCHECK_GE(positions.length(), num_regs);
 
