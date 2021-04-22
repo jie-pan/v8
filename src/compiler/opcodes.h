@@ -1145,6 +1145,10 @@ class V8_EXPORT_PRIVATE IrOpcode {
     DCHECK(0 <= value && value <= kLast);
     return IsFeedbackCollectingOpcode(static_cast<IrOpcode::Value>(value));
   }
+
+  static bool IsSimdOpcode(Value value) {
+    return kF64x2Splat <= value && value <= kStoreLane;
+  }
 };
 
 V8_EXPORT_PRIVATE std::ostream& operator<<(std::ostream&, IrOpcode::Value);
