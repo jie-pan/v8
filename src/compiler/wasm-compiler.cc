@@ -7785,6 +7785,18 @@ Handle<Code> CompileCWasmEntry(Isolate* isolate, const wasm::FunctionSig* sig,
 
 namespace {
 
+wasm::WasmCompilationHintSimdWidth GetSimdWidthHint(
+    const wasm::WasmModule* module, uint32_t func_index) {
+  DCHECK_LE(module->num_imported_functions, func_index);
+  uint32_t hint_index = declared_function_index(module, func_index);
+  const std::vector<wasm::WasmCompilationHint>& compilation_hints =
+      module->compilation_hints;
+  if (hint_index < compilation_hints.size()) {
+    return compilation_hints[hint_index].simd_width;
+  }
+  return wasm::WasmCompilationHintSimdWidth::kDefault;
+}
+
 bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
                                wasm::CompilationEnv* env,
                                const wasm::FunctionBody& func_body,

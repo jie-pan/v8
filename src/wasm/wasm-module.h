@@ -166,11 +166,17 @@ enum class WasmCompilationHintTier : uint8_t {
   kOptimized = 2,
 };
 
+enum class WasmCompilationHintSimdWidth : uint8_t {
+  kDefault = 0,
+  kWiden = 1,
+};
+
 // Static representation of a wasm compilation hint
 struct WasmCompilationHint {
   WasmCompilationHintStrategy strategy;
   WasmCompilationHintTier baseline_tier;
   WasmCompilationHintTier top_tier;
+  WasmCompilationHintSimdWidth simd_width;
 };
 
 enum ModuleOrigin : uint8_t {

@@ -1177,6 +1177,8 @@ class ModuleDecoderImpl : public Decoder {
           static_cast<WasmCompilationHintTier>(hint_byte >> 2 & 0x3);
       hint.top_tier =
           static_cast<WasmCompilationHintTier>(hint_byte >> 4 & 0x3);
+      hint.simd_width =
+          static_cast<WasmCompilationHintSimdWidth>(hint_byte >> 6 & 0x3);
 
       // Ensure that the top tier never downgrades a compilation result.
       // If baseline and top tier are the same compilation will be invoked only
