@@ -55,12 +55,16 @@ class V8_EXPORT_PRIVATE SimdWidening {
   void LowerLoadNode(Node* node);
   void LowerStoreNode(Node* node);
   void LowerLoadTransformNode(Node* node);
+  void ReplaceALlNodes();
+
 
   MachineGraph* const mcgraph_;
   Simd256OperatorBuilder* const simd256_;
   NodeMarker<State> state_;
   ZoneDeque<NodeState> stack_;
+  ZoneMap<Node*, const Operator*> replacements_;
   Signature<MachineRepresentation>* signature_;
+  bool has_unsupported_simd_op_;
 
 
 };
