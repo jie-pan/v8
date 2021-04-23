@@ -285,6 +285,12 @@ class TopTierRegisterAllocationData final : public RegisterAllocationData {
   const ZoneVector<TopLevelLiveRange*>& fixed_simd128_live_ranges() const {
     return fixed_simd128_live_ranges_;
   }
+  ZoneVector<TopLevelLiveRange*>& fixed_simd256_live_ranges() {
+    return fixed_simd256_live_ranges_;
+  }
+  const ZoneVector<TopLevelLiveRange*>& fixed_simd256_live_ranges() const {
+    return fixed_simd256_live_ranges_;
+  }
   ZoneVector<BitVector*>& live_in_sets() { return live_in_sets_; }
   ZoneVector<BitVector*>& live_out_sets() { return live_out_sets_; }
   ZoneVector<SpillRange*>& spill_ranges() { return spill_ranges_; }
@@ -371,6 +377,7 @@ class TopTierRegisterAllocationData final : public RegisterAllocationData {
   ZoneVector<TopLevelLiveRange*> fixed_float_live_ranges_;
   ZoneVector<TopLevelLiveRange*> fixed_double_live_ranges_;
   ZoneVector<TopLevelLiveRange*> fixed_simd128_live_ranges_;
+  ZoneVector<TopLevelLiveRange*> fixed_simd256_live_ranges_;
   ZoneVector<SpillRange*> spill_ranges_;
   DelayedReferences delayed_references_;
   BitVector* assigned_registers_;
