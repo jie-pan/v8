@@ -74,6 +74,9 @@ std::ostream& operator<<(std::ostream& os, LoadTransformation rep) {
       return os << "kS128Load32Zero";
     case LoadTransformation::kS128Load64Zero:
       return os << "kS128Load64Zero";
+    // Simd256
+    case LoadTransformation::kS256Load32Splat:
+      return os << "kS256Load32Splat";
   }
   UNREACHABLE();
 }
@@ -615,7 +618,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(MapInHeader)             \
   V(AnyTagged)               \
   V(CompressedPointer)       \
-  V(AnyCompressed)
+  V(AnyCompressed)           \
+  V(Simd256)
 
 #define MACHINE_REPRESENTATION_LIST(V) \
   V(kFloat32)                          \
@@ -630,7 +634,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(kTaggedPointer)                    \
   V(kTagged)                           \
   V(kCompressedPointer)                \
-  V(kCompressed)
+  V(kCompressed)                       \
+  V(kSimd256)
 
 #define LOAD_TRANSFORM_LIST(V) \
   V(S128Load8Splat)            \
@@ -644,7 +649,8 @@ std::ostream& operator<<(std::ostream& os, TruncateKind kind) {
   V(S128Load32x2S)             \
   V(S128Load32x2U)             \
   V(S128Load32Zero)            \
-  V(S128Load64Zero)
+  V(S128Load64Zero)            \
+  V(S256Load32Splat)
 
 #define ATOMIC_U32_TYPE_LIST(V) \
   V(Uint8)                      \

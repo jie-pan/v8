@@ -35,6 +35,8 @@
 #include "src/compiler/node-properties.h"
 #include "src/compiler/pipeline.h"
 #include "src/compiler/simd-scalar-lowering.h"
+#include "src/compiler/simd256-operator.h"
+#include "src/compiler/vector-promotion.h"
 #include "src/compiler/zone-stats.h"
 #include "src/execution/isolate-inl.h"
 #include "src/heap/factory.h"
@@ -7861,6 +7863,33 @@ bool BuildGraphForWasmFunction(AccountingAllocator* allocator,
       }
     }
     sig = sig_builder.Build();
+  }
+
+  // TODO(jie): Be consistant with SIMD vector width hint.
+  // Currently, the SIMD hints are about function itself, we don't want to
+  // affect other functions, so keep the signature unchanged.
+  wasm::WasmCompilationHintSimdWidth simd_width_hint =
+      GetSimdWidthHint(env->module, func_index);
+  if (builder.has_simd() && CpuFeatures::IsSupported(AVX) && !env->lower_simd &&
+      simd_width_hint != wasm::WasmCompilationHintSimdWidth::kDefault) {
+    bool simdsig = false;
+    for (auto ret : sig->returns()) {
+      if (ret == MachineRepresentation::kSimd128) {
+        simdsig = true;
+        break;
+      }
+    }
+    for (auto param : sig->parameters()) {
+      if (param == MachineRepresentation::kSimd128) {
+        simdsig = true;
+        break;
+      }
+    }
+
+    if (!simdsig) {
+      Simd256OperatorBuilder simd256(mcgraph->zone());
+      VectorPromotion(mcgraph, &simd256, sig).PromoteGraph();
+    }
   }
 
   builder.LowerInt64(sig);

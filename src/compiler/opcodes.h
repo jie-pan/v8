@@ -987,11 +987,26 @@
   V(LoadLane)                   \
   V(StoreLane)
 
-#define VALUE_OP_LIST(V)  \
-  COMMON_OP_LIST(V)       \
-  SIMPLIFIED_OP_LIST(V)   \
-  MACHINE_OP_LIST(V)      \
-  MACHINE_SIMD_OP_LIST(V) \
+// SIMD256 for AVX
+#define MACHINE_SIMD256_OP_LIST(V) \
+  V(F32x8Add)                      \
+  V(F32x8Sub)                      \
+  V(F32x8Mul)                      \
+  V(F32x8Div)                      \
+  V(F32x8Min)                      \
+  V(F32x8Max)                      \
+  V(F32x8Eq)                       \
+  V(F32x8Ne)                       \
+  V(F32x8Lt)                       \
+  V(F32x8Le)                       \
+  V(S256Select)
+
+#define VALUE_OP_LIST(V)     \
+  COMMON_OP_LIST(V)          \
+  SIMPLIFIED_OP_LIST(V)      \
+  MACHINE_OP_LIST(V)         \
+  MACHINE_SIMD_OP_LIST(V)    \
+  MACHINE_SIMD256_OP_LIST(V) \
   JS_OP_LIST(V)
 
 // The combination of all operators at all levels and the common operators.

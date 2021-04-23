@@ -44,8 +44,9 @@ enum class MachineRepresentation : uint8_t {
   kFloat32,
   kFloat64,
   kSimd128,
+  kSimd256,
   kFirstFPRepresentation = kFloat32,
-  kLastRepresentation = kSimd128
+  kLastRepresentation = kSimd256
 };
 
 bool IsSubtype(MachineRepresentation rep1, MachineRepresentation rep2);
@@ -63,7 +64,7 @@ ASSERT_CONSECUTIVE(Float64, Simd128)
 #undef ASSERT_CONSECUTIVE
 
 static_assert(MachineRepresentation::kLastRepresentation ==
-                  MachineRepresentation::kSimd128,
+                  MachineRepresentation::kSimd256,
               "FP and SIMD representations must be last.");
 
 static_assert(static_cast<int>(MachineRepresentation::kLastRepresentation) <
@@ -197,6 +198,9 @@ class MachineType {
   constexpr static MachineType Simd128() {
     return MachineType(MachineRepresentation::kSimd128, MachineSemantic::kNone);
   }
+  constexpr static MachineType Simd256() {
+    return MachineType(MachineRepresentation::kSimd256, MachineSemantic::kNone);
+  }
   constexpr static MachineType Pointer() {
     return MachineType(PointerRepresentation(), MachineSemantic::kNone);
   }
@@ -250,6 +254,8 @@ class MachineType {
         return MachineType::Float64();
       case MachineRepresentation::kSimd128:
         return MachineType::Simd128();
+      case MachineRepresentation::kSimd256:
+        return MachineType::Simd256();
       case MachineRepresentation::kTagged:
         return MachineType::AnyTagged();
       case MachineRepresentation::kTaggedSigned:
@@ -346,6 +352,8 @@ V8_EXPORT_PRIVATE inline constexpr int ElementSizeLog2Of(
       return 3;
     case MachineRepresentation::kSimd128:
       return 4;
+    case MachineRepresentation::kSimd256:
+      return 5;
     case MachineRepresentation::kTaggedSigned:
     case MachineRepresentation::kTaggedPointer:
     case MachineRepresentation::kTagged:
