@@ -1510,7 +1510,12 @@ void InstructionSelector::VisitNode(Node* node) {
       return VisitLoad(node);
     }
     case IrOpcode::kLoadTransform: {
-      MarkAsRepresentation(MachineRepresentation::kSimd128, node);
+      LoadTransformParameters params = LoadTransformParametersOf(node->op());
+      if (params.transformation == LoadTransformation::kS256Load32Splat) {
+        MarkAsRepresentation(MachineRepresentation::kSimd256, node);
+      } else {
+        MarkAsRepresentation(MachineRepresentation::kSimd128, node);
+      }
       return VisitLoadTransform(node);
     }
     case IrOpcode::kLoadLane: {
@@ -2391,6 +2396,33 @@ void InstructionSelector::VisitNode(Node* node) {
       return MarkAsWord32(node), VisitI16x8AllTrue(node);
     case IrOpcode::kI8x16AllTrue:
       return MarkAsWord32(node), VisitI8x16AllTrue(node);
+
+    // SIMD256
+    case IrOpcode::kF32x8Add:
+      return MarkAsSimd256(node), VisitF32x8Add(node);
+    case IrOpcode::kF32x8Sub:
+      return MarkAsSimd256(node), VisitF32x8Sub(node);
+    case IrOpcode::kF32x8Mul:
+      return MarkAsSimd256(node), VisitF32x8Mul(node);
+      /*
+    case IrOpcode::kF32x8Div:
+      return MarkAsSimd256(node), VisitF32x8Div(node);
+      */
+    case IrOpcode::kF32x8Min:
+      return MarkAsSimd256(node), VisitF32x8Min(node);
+    case IrOpcode::kF32x8Max:
+      return MarkAsSimd256(node), VisitF32x8Max(node);
+    case IrOpcode::kF32x8Eq:
+      return MarkAsSimd256(node), VisitF32x8Eq(node);
+    case IrOpcode::kF32x8Ne:
+      return MarkAsSimd256(node), VisitF32x8Ne(node);
+    case IrOpcode::kF32x8Lt:
+      return MarkAsSimd256(node), VisitF32x8Lt(node);
+    case IrOpcode::kF32x8Le:
+      return MarkAsSimd256(node), VisitF32x8Le(node);
+    case IrOpcode::kS256Select:
+      return MarkAsSimd256(node), VisitS256Select(node);
+
     default:
       FATAL("Unexpected operator #%d:%s @ node #%d", node->opcode(),
             node->op()->mnemonic(), node->id());

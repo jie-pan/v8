@@ -417,7 +417,22 @@ namespace compiler {
   V(X64Word64AtomicCompareExchangeUint8)  \
   V(X64Word64AtomicCompareExchangeUint16) \
   V(X64Word64AtomicCompareExchangeUint32) \
-  V(X64Word64AtomicCompareExchangeUint64)
+  V(X64Word64AtomicCompareExchangeUint64) \
+  V(X64F32x8Add)                          \
+  V(X64F32x8Sub)                          \
+  V(X64F32x8Mul)                          \
+  V(X64F32x8Min)                          \
+  V(X64F32x8Max)                          \
+  V(X64F32x8Eq)                           \
+  V(X64F32x8Ne)                           \
+  V(X64F32x8Lt)                           \
+  V(X64F32x8Le)                           \
+  V(X64S256Load32Splat)                   \
+  V(X64S256Select)                        \
+  V(X64Movdqu256)
+
+// TODO opcode count < (1<<9), 9bits bit field
+// V(X64F32x8Div)
 
 // Addressing modes represent the "shape" of inputs to an instruction.
 // Many instructions support multiple addressing modes. Addressing modes

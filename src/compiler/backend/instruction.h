@@ -95,12 +95,14 @@ class V8_EXPORT_PRIVATE INSTRUCTION_OPERAND_ALIGN InstructionOperand {
   inline bool IsFloatRegister() const;
   inline bool IsDoubleRegister() const;
   inline bool IsSimd128Register() const;
+  inline bool IsSimd256Register() const;
   inline bool IsAnyStackSlot() const;
   inline bool IsStackSlot() const;
   inline bool IsFPStackSlot() const;
   inline bool IsFloatStackSlot() const;
   inline bool IsDoubleStackSlot() const;
   inline bool IsSimd128StackSlot() const;
+  inline bool IsSimd256StackSlot() const;
 
   template <typename SubKindOperand>
   static SubKindOperand* New(Zone* zone, const SubKindOperand& op) {
@@ -529,7 +531,7 @@ class LocationOperand : public InstructionOperand {
   }
 
   Simd128Register GetSimd128Register() const {
-    DCHECK(IsSimd128Register());
+    DCHECK(IsSimd128Register() || IsSimd256Register());
     return Simd128Register::from_code(register_code());
   }
 
@@ -548,6 +550,7 @@ class LocationOperand : public InstructionOperand {
       case MachineRepresentation::kFloat32:
       case MachineRepresentation::kFloat64:
       case MachineRepresentation::kSimd128:
+      case MachineRepresentation::kSimd256:
       case MachineRepresentation::kTaggedSigned:
       case MachineRepresentation::kTaggedPointer:
       case MachineRepresentation::kTagged:
@@ -649,6 +652,11 @@ bool InstructionOperand::IsSimd128Register() const {
                                 MachineRepresentation::kSimd128;
 }
 
+bool InstructionOperand::IsSimd256Register() const {
+  return IsAnyRegister() && LocationOperand::cast(this)->representation() ==
+                                MachineRepresentation::kSimd256;
+}
+
 bool InstructionOperand::IsAnyStackSlot() const {
   return IsAnyLocationOperand() &&
          LocationOperand::cast(this)->location_kind() ==
@@ -687,6 +695,14 @@ bool InstructionOperand::IsSimd128StackSlot() const {
              LocationOperand::STACK_SLOT &&
          LocationOperand::cast(this)->representation() ==
              MachineRepresentation::kSimd128;
+}
+
+bool InstructionOperand::IsSimd256StackSlot() const {
+  return IsAnyLocationOperand() &&
+         LocationOperand::cast(this)->location_kind() ==
+             LocationOperand::STACK_SLOT &&
+         LocationOperand::cast(this)->representation() ==
+             MachineRepresentation::kSimd256;
 }
 
 uint64_t InstructionOperand::GetCanonicalizedValue() const {
@@ -1668,7 +1684,8 @@ class V8_EXPORT_PRIVATE InstructionSequence final
     constexpr int kFPRepMask =
         RepresentationBit(MachineRepresentation::kFloat32) |
         RepresentationBit(MachineRepresentation::kFloat64) |
-        RepresentationBit(MachineRepresentation::kSimd128);
+        RepresentationBit(MachineRepresentation::kSimd128) |
+        RepresentationBit(MachineRepresentation::kSimd256);
     return (representation_mask() & kFPRepMask) != 0;
   }
 
