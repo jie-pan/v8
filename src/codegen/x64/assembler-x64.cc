@@ -3551,41 +3551,61 @@ void Assembler::vmovq(Register dst, XMMRegister src) {
 }
 
 void Assembler::vmovdqa(XMMRegister dst, Operand src) {
+  vmovdqa(dst, src, kL128);
+}
+
+void Assembler::vmovdqa(XMMRegister dst, XMMRegister src) {
+  vmovdqa(dst, src, kL128);
+}
+
+void Assembler::vmovdqa(XMMRegister dst, Operand src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(dst, xmm0, src, kL128, k66, k0F, kWIG);
+  emit_vex_prefix(dst, xmm0, src, l, k66, k0F, kWIG);
   emit(0x6F);
   emit_sse_operand(dst, src);
 }
 
-void Assembler::vmovdqa(XMMRegister dst, XMMRegister src) {
+void Assembler::vmovdqa(XMMRegister dst, XMMRegister src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(dst, xmm0, src, kL128, k66, k0F, kWIG);
+  emit_vex_prefix(dst, xmm0, src, l, k66, k0F, kWIG);
   emit(0x6F);
   emit_sse_operand(dst, src);
 }
 
 void Assembler::vmovdqu(XMMRegister dst, Operand src) {
+  vmovdqu(dst, src, kL128);
+}
+
+void Assembler::vmovdqu(Operand dst, XMMRegister src) {
+  vmovdqu(dst, src, kL128);
+}
+
+void Assembler::vmovdqu(XMMRegister dst, XMMRegister src) {
+  vmovdqu(dst, src, kL128);
+}
+
+void Assembler::vmovdqu(XMMRegister dst, Operand src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(dst, xmm0, src, kL128, kF3, k0F, kWIG);
+  emit_vex_prefix(dst, xmm0, src, l, kF3, k0F, kWIG);
   emit(0x6F);
   emit_sse_operand(dst, src);
 }
 
-void Assembler::vmovdqu(Operand dst, XMMRegister src) {
+void Assembler::vmovdqu(Operand dst, XMMRegister src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(src, xmm0, dst, kL128, kF3, k0F, kWIG);
+  emit_vex_prefix(src, xmm0, dst, l, kF3, k0F, kWIG);
   emit(0x7F);
   emit_sse_operand(src, dst);
 }
 
-void Assembler::vmovdqu(XMMRegister dst, XMMRegister src) {
+void Assembler::vmovdqu(XMMRegister dst, XMMRegister src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(src, xmm0, dst, kL128, kF3, k0F, kWIG);
+  emit_vex_prefix(src, xmm0, dst, l, kF3, k0F, kWIG);
   emit(0x7F);
   emit_sse_operand(src, dst);
 }
