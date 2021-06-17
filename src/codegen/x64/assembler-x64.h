@@ -951,9 +951,9 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   void movmskps(Register dst, XMMRegister src);
 
   void vinstr(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
-              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
+              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX, VectorLength l = kLIG);
   void vinstr(byte op, XMMRegister dst, XMMRegister src1, Operand src2,
-              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX);
+              SIMDPrefix pp, LeadingOpcode m, VexW w, CpuFeature feature = AVX, VectorLength l = kLIG);
 
   // SSE instructions
   void sse_instr(XMMRegister dst, XMMRegister src, byte escape, byte opcode);
@@ -1010,6 +1010,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                          \
   void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {     \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0);          \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l) { \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0, AVX, l);          \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l) {     \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape, kW0, AVX, l);          \
   }
 
   SSE2_INSTRUCTION_LIST(DECLARE_SSE2_AVX_INSTRUCTION)
@@ -1116,6 +1122,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                           \
   void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2) {      \
     vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0); \
+  }                                                                           \
+  void v##instruction(XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l) {  \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0, AVX, l); \
+  }                                                                           \
+  void v##instruction(XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l) {      \
+    vinstr(0x##opcode, dst, src1, src2, k##prefix, k##escape1##escape2, kW0, AVX, l); \
   }
 
   SSSE3_INSTRUCTION_LIST(DECLARE_SSE34_AVX_INSTRUCTION)
@@ -1130,6 +1142,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                          \
   void v##instruction(XMMRegister dst, Operand src) {                        \
     vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0); \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, XMMRegister src, VectorLength l) {                    \
+    vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0, AVX, l); \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, Operand src, VectorLength l) {                        \
+    vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0, AVX, l); \
   }
 
   SSSE3_UNOP_INSTRUCTION_LIST(DECLARE_SSSE3_UNOP_AVX_INSTRUCTION)
@@ -1163,7 +1181,14 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                          \
   void v##instruction(XMMRegister dst, Operand src) {                        \
     vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0); \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, XMMRegister src, VectorLength l) {                    \
+    vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0, AVX, l); \
+  }                                                                          \
+  void v##instruction(XMMRegister dst, Operand src, VectorLength l) {                        \
+    vinstr(0x##opcode, dst, xmm0, src, k##prefix, k##escape1##escape2, kW0, AVX, l); \
   }
+
   SSE4_UNOP_INSTRUCTION_LIST(DECLARE_SSE4_PMOV_AVX_INSTRUCTION)
 #undef DECLARE_SSE4_PMOV_AVX_INSTRUCTION
 
@@ -1549,20 +1574,20 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
     vpd(0x50, idst, xmm0, src);
   }
   void vpmovmskb(Register dst, XMMRegister src);
-  void vcmpps(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp) {
-    vps(0xC2, dst, src1, src2);
+  void vcmpps(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp, VectorLength l = kL128) {
+    vps(0xC2, dst, src1, src2, l);
     emit(cmp);
   }
-  void vcmpps(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
-    vps(0xC2, dst, src1, src2);
+  void vcmpps(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp, VectorLength l = kL128) {
+    vps(0xC2, dst, src1, src2, l);
     emit(cmp);
   }
-  void vcmppd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp) {
-    vpd(0xC2, dst, src1, src2);
+  void vcmppd(XMMRegister dst, XMMRegister src1, XMMRegister src2, int8_t cmp, VectorLength l = kL128) {
+    vpd(0xC2, dst, src1, src2, l);
     emit(cmp);
   }
-  void vcmppd(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp) {
-    vpd(0xC2, dst, src1, src2);
+  void vcmppd(XMMRegister dst, XMMRegister src1, Operand src2, int8_t cmp, VectorLength l = kL128) {
+    vpd(0xC2, dst, src1, src2, l);
     emit(cmp);
   }
 
@@ -1578,6 +1603,18 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
   }                                                                     \
   void instr##pd(XMMRegister dst, XMMRegister src1, Operand src2) {     \
     vcmppd(dst, src1, src2, imm8);                                      \
+  }                                                                     \
+  void instr##ps(XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l) { \
+    vcmpps(dst, src1, src2, imm8, l);                                      \
+  }                                                                     \
+  void instr##ps(XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l) {     \
+    vcmpps(dst, src1, src2, imm8, l);                                      \
+  }                                                                     \
+  void instr##pd(XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l) { \
+    vcmppd(dst, src1, src2, imm8, l);                                      \
+  }                                                                     \
+  void instr##pd(XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l) {     \
+    vcmppd(dst, src1, src2, imm8, l);                                      \
   }
 
   AVX_CMP_P(vcmpeq, 0x0)
@@ -1689,12 +1726,12 @@ class V8_EXPORT_PRIVATE Assembler : public AssemblerBase {
     emit(imm8);
   }
 
-  void vps(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
-  void vps(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+  void vps(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l = kL128);
+  void vps(byte op, XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l = kL128);
   void vps(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2,
-           byte imm8);
-  void vpd(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2);
-  void vpd(byte op, XMMRegister dst, XMMRegister src1, Operand src2);
+           byte imm8, VectorLength l = kL128);
+  void vpd(byte op, XMMRegister dst, XMMRegister src1, XMMRegister src2, VectorLength l = kL128);
+  void vpd(byte op, XMMRegister dst, XMMRegister src1, Operand src2, VectorLength l = kL128);
 
   // AVX2 instructions
 #define AVX2_INSTRUCTION(instr, prefix, escape1, escape2, opcode)           \
