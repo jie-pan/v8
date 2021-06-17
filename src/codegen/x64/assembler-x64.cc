@@ -3455,14 +3455,22 @@ void Assembler::vmovshdup(XMMRegister dst, XMMRegister src) {
 }
 
 void Assembler::vbroadcastss(XMMRegister dst, Operand src) {
+  vbroadcastss(dst, src, kL128);
+}
+
+void Assembler::vbroadcastss(XMMRegister dst, XMMRegister src) {
+  vbroadcastss(dst, src, kL128);
+}
+
+void Assembler::vbroadcastss(XMMRegister dst, Operand src, VectorLength l) {
   DCHECK(IsEnabled(AVX));
   EnsureSpace ensure_space(this);
-  emit_vex_prefix(dst, xmm0, src, kL128, k66, k0F38, kW0);
+  emit_vex_prefix(dst, xmm0, src, l, k66, k0F38, kW0);
   emit(0x18);
   emit_sse_operand(dst, src);
 }
 
-void Assembler::vbroadcastss(XMMRegister dst, XMMRegister src) {
+void Assembler::vbroadcastss(XMMRegister dst, XMMRegister src, VectorLength l) {
   DCHECK(IsEnabled(AVX2));
   EnsureSpace ensure_space(this);
   emit_vex_prefix(dst, xmm0, src, kL128, k66, k0F38, kW0);
